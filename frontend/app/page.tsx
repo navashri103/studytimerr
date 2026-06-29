@@ -18,19 +18,7 @@ const containerVariants = {
 export default function Home() {
   return (
     <PageShell>
-      <SiteHeader />
-
-      <nav className="mt-10 flex flex-wrap gap-x-8 gap-y-2 text-sm text-black/55">
-        {techniques.map((technique) => (
-          <Link
-            key={technique.id}
-            href={technique.href}
-            className="transition-colors hover:text-black"
-          >
-            {technique.name}
-          </Link>
-        ))}
-      </nav>
+      <SiteHeader large />
 
       <div className="mt-12 grid grid-cols-1 gap-10 lg:grid-cols-[1.1fr_1fr] lg:items-center">
         <motion.div

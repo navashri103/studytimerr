@@ -1,11 +1,19 @@
 import Link from "next/link";
 
-export function SiteHeader({ backLink = false }: { backLink?: boolean }) {
+export function SiteHeader({
+  backLink = false,
+  large = false,
+}: {
+  backLink?: boolean;
+  large?: boolean;
+}) {
   return (
     <div className="flex items-center justify-between">
       <Link
         href="/"
-        className="font-[family-name:var(--font-serif)] text-2xl text-[#1f231a]"
+        className={`font-[family-name:var(--font-serif)] text-[#1f231a] ${
+          large ? "text-4xl sm:text-5xl" : "text-2xl"
+        }`}
       >
         StudyTimer
       </Link>
