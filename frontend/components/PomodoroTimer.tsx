@@ -25,6 +25,13 @@ const PHASE_COLOR: Record<PomodoroPhase, string> = {
   longBreak: "#7c3aed",
 };
 
+const PHASE_SOUND: Record<PomodoroPhase, string> = {
+  focus: "/timer-chime.mp3",
+  shortBreak: "/timer-ding.mp3",
+  longBreak: "/timer-analog.mp3",
+};
+
+const WARNING_SECONDS = 5;
 const RADIUS = 88;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
@@ -40,6 +47,11 @@ export function PomodoroTimer() {
     const id = setInterval(() => dispatch({ type: "TICK" }), 1000);
     return () => clearInterval(id);
   }, [state.isRunning]);
+
+  useEffect(() => {
+    if (!state.isRunning || state.secondsLeft !== WARNING_SECONDS) return;
+    new Audio(PHASE_SOUND[state.phase]).play().catch(() => {});
+  }, [state.isRunning, state.secondsLeft, state.phase]);
 
   const toggle = useCallback(() => {
     dispatch({ type: state.isRunning ? "PAUSE" : "START" });

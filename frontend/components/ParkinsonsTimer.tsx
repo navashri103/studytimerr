@@ -10,6 +10,8 @@ import {
 } from "@/lib/parkinsons";
 
 const COLOR = "#7c3aed";
+const WARNING_SECONDS = 5;
+const SOUND_SRC = "/timer-microwave.mp3";
 const RADIUS = 88;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
@@ -25,6 +27,11 @@ export function ParkinsonsTimer() {
     const id = setInterval(() => dispatch({ type: "TICK" }), 1000);
     return () => clearInterval(id);
   }, [state.isRunning]);
+
+  useEffect(() => {
+    if (!state.isRunning || state.secondsLeft !== WARNING_SECONDS) return;
+    new Audio(SOUND_SRC).play().catch(() => {});
+  }, [state.isRunning, state.secondsLeft]);
 
   if (!state.isSetup) {
     return <SetupForm onSetup={(taskName, totalSeconds) => dispatch({ type: "SETUP", taskName, totalSeconds })} />;
