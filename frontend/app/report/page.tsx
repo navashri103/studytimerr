@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { CalendarDays, Flame, TrendingUp, type LucideIcon } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
 import { ReportHeatmap } from "@/components/ReportHeatmap";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -54,13 +55,26 @@ export default function ReportPage() {
       </p>
 
       <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-3">
-        <StatCard label="Day streak" value={streak === null ? "—" : `${streak}`} />
         <StatCard
+          icon={Flame}
+          chipBg="bg-amber-100"
+          accent="text-amber-700"
+          label="Day streak"
+          value={streak === null ? "—" : `${streak}`}
+          sub={streak === null ? undefined : streak === 1 ? "day" : "days"}
+        />
+        <StatCard
+          icon={TrendingUp}
+          chipBg="bg-sky-100"
+          accent="text-sky-700"
           label="This week"
           value={week === null ? "—" : `${week.focusMinutes} min`}
           sub={week === null ? undefined : `${week.tasksCompleted} tasks`}
         />
         <StatCard
+          icon={CalendarDays}
+          chipBg="bg-violet-100"
+          accent="text-violet-700"
           label="This month"
           value={month === null ? "—" : `${month.focusMinutes} min`}
           sub={month === null ? undefined : `${month.tasksCompleted} tasks`}
@@ -68,14 +82,36 @@ export default function ReportPage() {
       </div>
 
       <div className="mt-8 rounded-2xl border border-black/5 bg-[#f7f4e8] p-6">
-        <p className="text-xs font-medium uppercase tracking-widest text-black/45">
-          Last 13 weeks
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-medium uppercase tracking-widest text-black/45">
+            Last 13 weeks
+          </p>
+          <div className="flex items-center gap-1.5 text-[10px] text-black/40">
+            <span>Less</span>
+            <span className="size-2.5 rounded-sm bg-black/5" />
+            <span className="size-2.5 rounded-sm bg-amber-200" />
+            <span className="size-2.5 rounded-sm bg-amber-400" />
+            <span className="size-2.5 rounded-sm bg-amber-600" />
+            <span className="size-2.5 rounded-sm bg-amber-800" />
+            <span>More</span>
+          </div>
+        </div>
         <div className="mt-4">
           {heatmapWeeks ? (
             <ReportHeatmap weeks={heatmapWeeks} />
           ) : (
-            <p className="text-sm text-black/40">Loading...</p>
+            <div className="flex gap-1">
+              {Array.from({ length: 13 }).map((_, i) => (
+                <div key={i} className="flex flex-col gap-1">
+                  {Array.from({ length: 7 }).map((_, j) => (
+                    <div
+                      key={j}
+                      className="size-3 animate-pulse rounded-sm bg-black/5"
+                    />
+                  ))}
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </div>
@@ -84,17 +120,26 @@ export default function ReportPage() {
 }
 
 function StatCard({
+  icon: Icon,
+  chipBg,
+  accent,
   label,
   value,
   sub,
 }: {
+  icon: LucideIcon;
+  chipBg: string;
+  accent: string;
   label: string;
   value: string;
   sub?: string;
 }) {
   return (
     <div className="rounded-2xl border border-black/5 bg-white p-5">
-      <p className="text-xs font-medium uppercase tracking-widest text-black/45">
+      <div className={`flex size-9 items-center justify-center rounded-xl ${chipBg}`}>
+        <Icon className={`size-[18px] ${accent}`} strokeWidth={1.5} />
+      </div>
+      <p className="mt-3 text-xs font-medium uppercase tracking-widest text-black/45">
         {label}
       </p>
       <p className="mt-1 font-[family-name:var(--font-serif)] text-3xl text-[#1f231a]">
