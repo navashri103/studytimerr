@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { MemoryMatchGame } from "@/components/MemoryMatchGame";
 import { ReactionTimeGame } from "@/components/ReactionTimeGame";
+import { WordScrambleGame } from "@/components/WordScrambleGame";
 
-type GameKey = "memory" | "reaction";
+type GameKey = "memory" | "reaction" | "scramble";
 
 const GAMES: { key: GameKey; label: string }[] = [
   { key: "memory", label: "Memory match" },
   { key: "reaction", label: "Reaction test" },
+  { key: "scramble", label: "Word scramble" },
 ];
 
 export function BreakGames() {
@@ -20,7 +22,7 @@ export function BreakGames() {
         Play while you wait
       </p>
 
-      <div className="mt-3 flex gap-2">
+      <div className="mt-3 flex flex-wrap gap-2">
         {GAMES.map((game) => (
           <button
             key={game.key}
@@ -38,7 +40,9 @@ export function BreakGames() {
       </div>
 
       <div className="mt-5 flex justify-center">
-        {active === "memory" ? <MemoryMatchGame /> : <ReactionTimeGame />}
+        {active === "memory" && <MemoryMatchGame />}
+        {active === "reaction" && <ReactionTimeGame />}
+        {active === "scramble" && <WordScrambleGame />}
       </div>
     </div>
   );
