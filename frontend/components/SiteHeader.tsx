@@ -20,6 +20,7 @@ export function SiteHeader({
         StudyTimer
       </Link>
       <div className="flex items-center gap-4">
+        <FullscreenToggle />
         {backLink && (
           <Link
             href="/"
@@ -28,7 +29,6 @@ export function SiteHeader({
             Back to dashboard
           </Link>
         )}
-        <FullscreenToggle />
         <Link
           href="/workspace"
           className="text-xs font-medium uppercase tracking-widest text-black/45 transition-colors hover:text-black"

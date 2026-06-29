@@ -68,10 +68,10 @@ export default function Home() {
             <motion.div
               animate={{ scale: [1, 1.08, 1], opacity: [0.5, 0.8, 0.5] }}
               transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-              className="flex size-40 items-center justify-center rounded-full border-2 border-white/70"
+              className="flex size-40 items-center justify-center rounded-full border-2 border-black/30"
             >
-              <div className="flex size-28 items-center justify-center rounded-full border border-white/50 bg-white/30">
-                <Clock className="size-10 text-white/80" strokeWidth={1.5} />
+              <div className="flex size-28 items-center justify-center rounded-full border border-black/20 bg-black/5">
+                <Clock className="size-10 text-black/70" strokeWidth={1.5} />
               </div>
             </motion.div>
           </div>
