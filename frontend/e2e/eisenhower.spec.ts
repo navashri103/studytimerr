@@ -4,6 +4,7 @@ test("eisenhower: add a task in every quadrant independently", async ({
   page,
 }) => {
   await page.goto("/eisenhower");
+  await page.waitForLoadState("networkidle");
 
   const addInputs = page.getByPlaceholder("Add a task");
   await expect(addInputs).toHaveCount(4);
@@ -23,6 +24,7 @@ test("eisenhower: edit, complete, delete a task, then save to a results view", a
   page,
 }) => {
   await page.goto("/eisenhower");
+  await page.waitForLoadState("networkidle");
 
   const doInput = page.getByPlaceholder("Add a task").first();
   await doInput.fill("Ship the report");
@@ -39,7 +41,10 @@ test("eisenhower: edit, complete, delete a task, then save to a results view", a
   ).toBeVisible();
 
   // Complete: toggle the checkbox, expect strike-through styling.
-  await page.getByRole("button", { name: "Mark as completed" }).click();
+  const shippedRow = page
+    .getByText("Ship the final report", { exact: true })
+    .locator("..");
+  await shippedRow.getByRole("button", { name: "Mark as completed" }).click();
   await expect(
     page.getByText("Ship the final report", { exact: true }),
   ).toHaveClass(/line-through/);

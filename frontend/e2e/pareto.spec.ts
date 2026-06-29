@@ -4,6 +4,7 @@ test("pareto: add an item, move it to vital few, chart reflects the split", asyn
   page,
 }) => {
   await page.goto("/pareto");
+  await page.waitForLoadState("networkidle");
 
   const input = page.getByPlaceholder("Add a task or topic");
   await input.fill("Read chapter 4");

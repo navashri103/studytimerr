@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Pencil, Plus, Save, X } from "lucide-react";
+import { apiFetch } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import {
   QUADRANT_META,
   addTask,
@@ -26,14 +28,93 @@ const QUADRANT_ORDER: Quadrant[] = ["do", "decide", "delegate", "delete"];
 
 type Mode = "edit" | "results";
 
+type ApiTask = {
+  id: string;
+  quadrant: Quadrant;
+  text: string;
+  completed: boolean;
+};
+
 export function EisenhowerBoard() {
+  const { session } = useAuth();
   const [state, setState] = useState<EisenhowerState>(
     createInitialEisenhowerState,
   );
   const [mode, setMode] = useState<Mode>("edit");
 
-  const toggleCompleted = (quadrant: Quadrant, id: string) =>
+  useEffect(() => {
+    if (!session) return;
+    apiFetch<ApiTask[]>("/eisenhower-tasks", { token: session.accessToken })
+      .then((tasks) => {
+        setState((prev) => {
+          const next = createInitialEisenhowerState();
+          const knownIds = new Set(QUADRANT_ORDER.flatMap((q) => prev[q].map((t) => t.id)));
+          for (const quadrant of QUADRANT_ORDER) {
+            next[quadrant] = [...prev[quadrant]];
+          }
+          for (const task of tasks) {
+            if (knownIds.has(task.id)) continue;
+            next[task.quadrant].push({
+              id: task.id,
+              text: task.text,
+              completed: task.completed,
+            });
+          }
+          return next;
+        });
+      })
+      .catch(() => {});
+  }, [session]);
+
+  function addRemoteTask(quadrant: Quadrant, text: string) {
+    if (!session) return;
+    apiFetch<ApiTask>("/eisenhower-tasks", {
+      method: "POST",
+      token: session.accessToken,
+      body: JSON.stringify({ quadrant, text }),
+    })
+      .then((task) => {
+        setState((prev) => addTask(prev, quadrant, task.id, task.text));
+      })
+      .catch(() => {});
+  }
+
+  function editRemoteTask(quadrant: Quadrant, id: string, text: string) {
+    if (!session) return;
+    setState((prev) => editTask(prev, quadrant, id, text));
+    apiFetch(`/eisenhower-tasks/${id}`, {
+      method: "PATCH",
+      token: session.accessToken,
+      body: JSON.stringify({ text }),
+    }).catch(() => {});
+  }
+
+  function toggleCompleted(quadrant: Quadrant, id: string) {
+    if (!session) return;
+    const task = state[quadrant].find((t) => t.id === id);
+    if (!task) return;
+    const nextCompleted = !task.completed;
     setState((prev) => toggleTaskCompleted(prev, quadrant, id));
+    apiFetch(`/eisenhower-tasks/${id}`, {
+      method: "PATCH",
+      token: session.accessToken,
+      body: JSON.stringify({ completed: nextCompleted }),
+    }).catch(() => {});
+    apiFetch("/daily-stats/tasks-completed", {
+      method: "POST",
+      token: session.accessToken,
+      body: JSON.stringify({ delta: nextCompleted ? 1 : -1 }),
+    }).catch(() => {});
+  }
+
+  function deleteRemoteTask(quadrant: Quadrant, id: string) {
+    if (!session) return;
+    setState((prev) => removeTask(prev, quadrant, id));
+    apiFetch(`/eisenhower-tasks/${id}`, {
+      method: "DELETE",
+      token: session.accessToken,
+    }).catch(() => {});
+  }
 
   return (
     <AnimatePresence mode="wait">
@@ -51,18 +132,10 @@ export function EisenhowerBoard() {
                 key={quadrant}
                 quadrant={quadrant}
                 tasks={state[quadrant]}
-                onAdd={(text) =>
-                  setState((prev) =>
-                    addTask(prev, quadrant, crypto.randomUUID(), text),
-                  )
-                }
-                onEdit={(id, text) =>
-                  setState((prev) => editTask(prev, quadrant, id, text))
-                }
+                onAdd={(text) => addRemoteTask(quadrant, text)}
+                onEdit={(id, text) => editRemoteTask(quadrant, id, text)}
                 onToggleCompleted={(id) => toggleCompleted(quadrant, id)}
-                onDelete={(id) =>
-                  setState((prev) => removeTask(prev, quadrant, id))
-                }
+                onDelete={(id) => deleteRemoteTask(quadrant, id)}
               />
             ))}
           </div>

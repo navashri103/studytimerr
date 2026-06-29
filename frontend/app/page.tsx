@@ -3,9 +3,12 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
+import { useEffect, useState } from "react";
 import { PageShell } from "@/components/PageShell";
 import { SiteHeader } from "@/components/SiteHeader";
 import { TechniqueCard } from "@/components/TechniqueCard";
+import { apiFetch } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import { techniques } from "@/lib/techniques";
 
 const containerVariants = {
@@ -15,7 +18,23 @@ const containerVariants = {
   },
 };
 
+type DailyStats = {
+  date: string;
+  focus_minutes: number;
+  tasks_completed: number;
+};
+
 export default function Home() {
+  const { session } = useAuth();
+  const [stats, setStats] = useState<DailyStats | null>(null);
+
+  useEffect(() => {
+    if (!session) return;
+    apiFetch<DailyStats>("/daily-stats/today", { token: session.accessToken })
+      .then(setStats)
+      .catch(() => setStats(null));
+  }, [session]);
+
   return (
     <PageShell>
       <SiteHeader large />
@@ -51,12 +70,12 @@ export default function Home() {
             className="absolute left-6 top-8 w-44 rounded-2xl border border-white/60 bg-white/50 p-4 shadow-lg backdrop-blur-md"
           >
             <p className="text-xs uppercase tracking-wide text-black/50">
-              Technique
+              Today
             </p>
             <p className="mt-1 font-[family-name:var(--font-serif)] text-xl text-[#1f231a]">
-              Pomodoro
+              {stats ? `${stats.focus_minutes} min` : "—"}
             </p>
-            <p className="mt-1 text-xs text-black/50">25:00 focus session</p>
+            <p className="mt-1 text-xs text-black/50">focused</p>
           </motion.div>
 
           <motion.div
@@ -65,12 +84,12 @@ export default function Home() {
             className="absolute bottom-8 right-6 w-40 rounded-2xl border border-white/60 bg-white/50 p-4 shadow-lg backdrop-blur-md"
           >
             <p className="text-xs uppercase tracking-wide text-black/50">
-              Focus streak
+              Today
             </p>
             <p className="mt-1 font-[family-name:var(--font-serif)] text-xl text-[#1f231a]">
-              3 / 4
+              {stats ? stats.tasks_completed : "—"}
             </p>
-            <p className="mt-1 text-xs text-black/50">sessions today</p>
+            <p className="mt-1 text-xs text-black/50">tasks completed</p>
           </motion.div>
         </div>
       </div>

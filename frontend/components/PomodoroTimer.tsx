@@ -1,9 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useReducer } from "react";
+import { useCallback, useEffect, useReducer, useRef } from "react";
 import { motion } from "framer-motion";
 import { Pause, Play, RotateCcw, SkipForward } from "lucide-react";
 import { BreakGames } from "@/components/BreakGames";
+import { apiFetch } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import {
   POMODORO_DURATIONS,
   SESSIONS_BEFORE_LONG_BREAK,
@@ -36,17 +38,30 @@ const RADIUS = 88;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 export function PomodoroTimer() {
+  const { session } = useAuth();
   const [state, dispatch] = useReducer(
     pomodoroReducer,
     undefined,
     createInitialPomodoroState,
   );
+  const previousPhase = useRef(state.phase);
 
   useEffect(() => {
     if (!state.isRunning) return;
     const id = setInterval(() => dispatch({ type: "TICK" }), 1000);
     return () => clearInterval(id);
   }, [state.isRunning]);
+
+  useEffect(() => {
+    if (previousPhase.current === "focus" && state.phase !== "focus" && session) {
+      apiFetch("/daily-stats/focus-minutes", {
+        method: "POST",
+        token: session.accessToken,
+        body: JSON.stringify({ minutes: POMODORO_DURATIONS.focus / 60 }),
+      }).catch(() => {});
+    }
+    previousPhase.current = state.phase;
+  }, [state.phase, session]);
 
   useEffect(() => {
     if (!state.isRunning || state.secondsLeft !== WARNING_SECONDS) return;

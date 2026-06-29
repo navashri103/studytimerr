@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowDown, ArrowUp, Plus, X } from "lucide-react";
+import { apiFetch } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import {
   addItem,
   createInitialParetoState,
@@ -14,17 +16,61 @@ import {
 } from "@/lib/pareto";
 import { ParetoChart } from "@/components/ParetoChart";
 
+type ApiItem = { id: string; text: string; vital: boolean };
+
 export function ParetoList() {
+  const { session } = useAuth();
   const [state, setState] = useState<ParetoState>(createInitialParetoState);
   const [draft, setDraft] = useState("");
+
+  useEffect(() => {
+    if (!session) return;
+    apiFetch<ApiItem[]>("/pareto-items", { token: session.accessToken })
+      .then((items) => {
+        setState((prev) => {
+          const knownIds = new Set(prev.map((item) => item.id));
+          return [...prev, ...items.filter((item) => !knownIds.has(item.id))];
+        });
+      })
+      .catch(() => {});
+  }, [session]);
 
   const vital = state.filter((item) => item.vital);
   const trivial = state.filter((item) => !item.vital);
 
   function submit() {
-    if (!draft.trim()) return;
-    setState((prev) => addItem(prev, crypto.randomUUID(), draft));
+    if (!draft.trim() || !session) return;
+    apiFetch<ApiItem>("/pareto-items", {
+      method: "POST",
+      token: session.accessToken,
+      body: JSON.stringify({ text: draft }),
+    })
+      .then((item) => {
+        setState((prev) => addItem(prev, item.id, item.text));
+      })
+      .catch(() => {});
     setDraft("");
+  }
+
+  function move(id: string) {
+    if (!session) return;
+    const item = state.find((i) => i.id === id);
+    if (!item) return;
+    setState((prev) => toggleVital(prev, id));
+    apiFetch(`/pareto-items/${id}`, {
+      method: "PATCH",
+      token: session.accessToken,
+      body: JSON.stringify({ vital: !item.vital }),
+    }).catch(() => {});
+  }
+
+  function remove(id: string) {
+    if (!session) return;
+    setState((prev) => removeItem(prev, id));
+    apiFetch(`/pareto-items/${id}`, {
+      method: "DELETE",
+      token: session.accessToken,
+    }).catch(() => {});
   }
 
   return (
@@ -61,8 +107,8 @@ export function ParetoList() {
           emptyHint="Mark an item below as vital to move it here."
           moveIcon={<ArrowDown className="size-3.5" />}
           moveLabel="Move to trivial many"
-          onMove={(id) => setState((prev) => toggleVital(prev, id))}
-          onRemove={(id) => setState((prev) => removeItem(prev, id))}
+          onMove={move}
+          onRemove={remove}
         />
 
         <Section
@@ -74,8 +120,8 @@ export function ParetoList() {
           emptyHint="Add a task or topic above to get started."
           moveIcon={<ArrowUp className="size-3.5" />}
           moveLabel="Move to vital few"
-          onMove={(id) => setState((prev) => toggleVital(prev, id))}
-          onRemove={(id) => setState((prev) => removeItem(prev, id))}
+          onMove={move}
+          onRemove={remove}
         />
       </div>
 
