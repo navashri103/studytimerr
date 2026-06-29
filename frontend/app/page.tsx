@@ -38,7 +38,7 @@ export default function Home() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          <h1 className="bg-gradient-to-b from-[#e3bd5c] to-[#a8761f] bg-clip-text pl-1 font-[family-name:var(--font-serif)] text-6xl italic leading-[1.15] text-transparent sm:text-7xl">
+          <h1 className="pl-1 font-[family-name:var(--font-serif)] text-6xl italic leading-[1.15] text-[#a8761f] sm:text-7xl">
             Just focus
             <br />
             on your time.
