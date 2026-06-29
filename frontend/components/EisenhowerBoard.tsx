@@ -173,7 +173,7 @@ function QuadrantPanel({
           ))}
         </AnimatePresence>
         {tasks.length === 0 && (
-          <p className="text-sm text-black/35">No tasks yet.</p>
+          <li className="text-sm text-black/35">No tasks yet.</li>
         )}
       </ul>
 
