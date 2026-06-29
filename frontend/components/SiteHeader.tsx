@@ -27,6 +27,12 @@ export function SiteHeader({
             Back to dashboard
           </Link>
         )}
+        <Link
+          href="/workspace"
+          className="text-xs font-medium uppercase tracking-widest text-black/45 transition-colors hover:text-black"
+        >
+          Workspace
+        </Link>
         <LogoutButton />
       </div>
     </div>
