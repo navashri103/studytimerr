@@ -15,13 +15,9 @@
 
 body {
   position: relative;
-  background: radial-gradient(
-      circle at 15% 10%,
-      #f6f7e8 0%,
-      transparent 45%
-    ),
-    radial-gradient(circle at 85% 90%, #ccd1a3 0%, transparent 50%),
+  background: radial-gradient(circle at 15% 10%, #f6f7e8 0%, transparent 45%),
     var(--background);
+  background-attachment: fixed;
   color: var(--foreground);
   font-family: var(--font-sans), sans-serif;
 }
