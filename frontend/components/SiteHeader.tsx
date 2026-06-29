@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FullscreenToggle } from "@/components/FullscreenToggle";
 import { LogoutButton } from "@/components/LogoutButton";
 
 export function SiteHeader({
@@ -34,6 +35,7 @@ export function SiteHeader({
           Workspace
         </Link>
         <LogoutButton />
+        <FullscreenToggle />
       </div>
     </div>
   );

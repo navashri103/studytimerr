@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Clock } from "lucide-react";
 import { useEffect, useState } from "react";
 import { PageShell } from "@/components/PageShell";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -64,6 +64,18 @@ export default function Home() {
         </motion.div>
 
         <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-gradient-to-br from-orange-100 via-sky-100 to-violet-100">
+          <div className="absolute inset-0 flex items-center justify-center">
+            <motion.div
+              animate={{ scale: [1, 1.08, 1], opacity: [0.5, 0.8, 0.5] }}
+              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+              className="flex size-40 items-center justify-center rounded-full border-2 border-white/70"
+            >
+              <div className="flex size-28 items-center justify-center rounded-full border border-white/50 bg-white/30">
+                <Clock className="size-10 text-white/80" strokeWidth={1.5} />
+              </div>
+            </motion.div>
+          </div>
+
           <motion.div
             animate={{ y: [0, -8, 0] }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
