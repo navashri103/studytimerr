@@ -28,6 +28,7 @@ export function SiteHeader({
             Back to dashboard
           </Link>
         )}
+        <FullscreenToggle />
         <Link
           href="/workspace"
           className="text-xs font-medium uppercase tracking-widest text-black/45 transition-colors hover:text-black"
@@ -35,7 +36,6 @@ export function SiteHeader({
           Workspace
         </Link>
         <LogoutButton />
-        <FullscreenToggle />
       </div>
     </div>
   );

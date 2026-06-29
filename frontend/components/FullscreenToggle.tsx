@@ -27,7 +27,7 @@ export function FullscreenToggle() {
       type="button"
       onClick={toggle}
       aria-label={isFullscreen ? "Exit full screen" : "Enter full screen"}
-      className="text-black/40 transition-colors hover:text-black/70"
+      className="text-black transition-colors hover:text-black/70"
     >
       {isFullscreen ? (
         <Minimize className="size-4" />
