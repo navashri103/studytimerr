@@ -39,12 +39,50 @@ activity report, and a Spotify player widget, gated behind login.
 - Spotify player widget: any public playlist, switchable by the end user
   with inline instructions, choice persisted in `localStorage`.
 
+## Verified, not just assumed
+
+Ran live tests against two real (throwaway) Supabase-backed accounts to
+confirm the data-isolation story actually holds, not just "RLS exists so it
+should be fine":
+
+- User B's `eisenhower-tasks` list correctly returned 0 rows after User A
+  created a task — confirmed cross-user read isolation.
+- User B attempting to `PATCH` a task by User A's real item id returned
+  `404 Item not found` (RLS + our own `user_id` filter both block it) —
+  confirmed cross-user write isolation, not just read isolation.
+- Same result repeated for `pareto-items`.
+- All endpoints correctly return `401` with no auth header at all.
+- Confirmed no real secrets have ever been committed (checked full git
+  history) — only the empty `.env.example` templates are tracked.
+
+One new finding from this pass: an unhandled backend exception (e.g. an
+`httpx.ReadTimeout` when Supabase is briefly slow) currently surfaces to the
+client as a bare `Internal Server Error` string, not a clean JSON error.
+It does **not** leak a stack trace to the client (confirmed by inspecting
+the actual response body) — the traceback only appears in server-side
+logs — so this is a robustness gap, not a security leak. Worth adding a
+global exception handler before deploy so clients get a consistent JSON
+error shape instead of plain text.
+
+## Performance
+
+Found and fixed a real bug this session: every API request was creating a
+brand-new Supabase client via `create_client()` inside the auth dependency,
+paying a fresh TCP+TLS handshake on every single call. This was the actual
+cause of "the Report page loads slowly" (and everything else feeling
+sluggish) — measured at ~1.2-1.4s per request before the fix. Replaced the
+data routers' Supabase-py calls with direct PostgREST REST calls through one
+shared, connection-pooled `httpx.Client` (`backend/app/db.py`). Repeat
+requests now take ~200-225ms. This also explains some of the intermittent
+Playwright test flakiness seen earlier in the build — the old latency was
+occasionally large enough to trip test timeouts under load.
+
 ## Test coverage
 
-- **Frontend unit tests (Vitest):** 75 passing, covering all `lib/` pure
+- **Frontend unit tests (Vitest):** 80 passing, covering all `lib/` pure
   logic — Pomodoro state machine, Eisenhower/Pareto data ops, report stats
   (streak/totals/heatmap), playlist-link parsing, memory match, reaction
-  test, word scramble.
+  test, word scramble, the technique-picker quiz.
 - **Frontend integration tests (Playwright):** 8 passing against a real
   production build and a real (test) Supabase-backed account — dashboard
   nav, Pomodoro phase transitions, Eisenhower CRUD + Save/Results, Pareto
@@ -94,12 +132,17 @@ activity report, and a Spotify player widget, gated behind login.
 7. **No rate limiting** on `/auth/signup` or `/auth/login` in our own
    backend. Supabase Auth has its own platform-level limits, but confirm
    they're sufficient, or add limiting at the FastAPI layer too.
+8. **No global exception handler** — an unhandled error (timeouts,
+   unexpected Supabase responses) currently returns a bare text
+   `Internal Server Error` instead of a structured JSON error. Not a
+   security leak (no stack trace reaches the client), but worth a generic
+   `@app.exception_handler` for consistency before real users hit it.
 
 ### Low priority / housekeeping
 
-8. **`.hintrc`** at the project root looks IDE-generated (webhint), not
+9. **`.hintrc`** at the project root looks IDE-generated (webhint), not
    something intentionally added — confirm it's wanted or delete it.
-9. No HTTPS enforcement anywhere yet, since everything runs on
+10. No HTTPS enforcement anywhere yet, since everything runs on
    `localhost`. Standard for local dev, but flag it as a pre-deploy
    checklist item, not something to fix now.
 
