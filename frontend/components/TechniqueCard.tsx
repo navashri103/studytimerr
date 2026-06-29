@@ -19,7 +19,7 @@ export function TechniqueCard({ technique }: { technique: Technique }) {
     >
       <Link
         href={technique.href}
-        className="group flex h-full flex-col gap-5 rounded-2xl border border-black/5 bg-white p-6 shadow-sm transition-shadow duration-300 hover:shadow-lg"
+        className="group flex h-full flex-col gap-5 rounded-2xl border border-black/5 bg-[#f7f4e8] p-6 shadow-sm transition-shadow duration-300 hover:shadow-lg"
       >
         <div
           className={`flex size-12 items-center justify-center rounded-xl ${technique.chipBg}`}
@@ -36,7 +36,7 @@ export function TechniqueCard({ technique }: { technique: Technique }) {
           </p>
         </div>
 
-        <span className="inline-flex items-center gap-1 self-start rounded-full bg-black/5 px-3 py-1 text-xs font-medium uppercase tracking-wide text-black/60 transition-colors group-hover:bg-black group-hover:text-white">
+        <span className="inline-flex items-center gap-1 self-start rounded-full bg-black/5 px-3 py-1 text-xs font-medium uppercase tracking-wide text-black/60 transition-colors group-hover:bg-[#b9872a] group-hover:text-white">
           Open
           <ArrowUpRight className="size-3.5" />
         </span>

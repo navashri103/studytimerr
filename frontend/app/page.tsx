@@ -38,7 +38,7 @@ export default function Home() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          <h1 className="font-[family-name:var(--font-serif)] text-6xl italic leading-[0.95] text-[#1f231a] sm:text-7xl">
+          <h1 className="bg-gradient-to-b from-[#f7e9b8] to-[#b9872a] bg-clip-text font-[family-name:var(--font-serif)] text-6xl italic leading-[0.95] text-transparent sm:text-7xl">
             Just focus
             <br />
             on your time.
@@ -87,11 +87,18 @@ export default function Home() {
         </div>
       </div>
 
+      <div className="mt-16 flex items-center gap-4">
+        <span className="font-[family-name:var(--font-serif)] text-xl italic text-[#b9872a]">
+          Choose your method
+        </span>
+        <span className="h-px flex-1 bg-[#b9872a]/25" />
+      </div>
+
       <motion.div
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="mt-16 grid w-full grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4"
+        className="mt-8 grid w-full grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4"
       >
         {techniques.map((technique) => (
           <TechniqueCard key={technique.id} technique={technique} />
