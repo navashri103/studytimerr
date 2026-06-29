@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useReducer } from "react";
 import { motion } from "framer-motion";
 import { Pause, Play, RotateCcw, SkipForward } from "lucide-react";
+import { BreakGames } from "@/components/BreakGames";
 import {
   POMODORO_DURATIONS,
   SESSIONS_BEFORE_LONG_BREAK,
@@ -140,6 +141,8 @@ export function PomodoroTimer() {
           Skip
         </button>
       </div>
+
+      {state.phase !== "focus" && <BreakGames />}
     </div>
   );
 }
