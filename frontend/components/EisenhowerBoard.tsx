@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, Plus, X } from "lucide-react";
+import { Check, Pencil, Plus, Save, X } from "lucide-react";
 import {
   QUADRANT_META,
   addTask,
@@ -24,35 +24,95 @@ const QUADRANT_STYLE: Record<Quadrant, { chip: string; accent: string }> = {
 
 const QUADRANT_ORDER: Quadrant[] = ["do", "decide", "delegate", "delete"];
 
+type Mode = "edit" | "results";
+
 export function EisenhowerBoard() {
   const [state, setState] = useState<EisenhowerState>(
     createInitialEisenhowerState,
   );
+  const [mode, setMode] = useState<Mode>("edit");
+
+  const toggleCompleted = (quadrant: Quadrant, id: string) =>
+    setState((prev) => toggleTaskCompleted(prev, quadrant, id));
 
   return (
-    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-      {QUADRANT_ORDER.map((quadrant) => (
-        <QuadrantPanel
-          key={quadrant}
-          quadrant={quadrant}
-          tasks={state[quadrant]}
-          onAdd={(text) =>
-            setState((prev) =>
-              addTask(prev, quadrant, crypto.randomUUID(), text),
-            )
-          }
-          onEdit={(id, text) =>
-            setState((prev) => editTask(prev, quadrant, id, text))
-          }
-          onToggleCompleted={(id) =>
-            setState((prev) => toggleTaskCompleted(prev, quadrant, id))
-          }
-          onDelete={(id) =>
-            setState((prev) => removeTask(prev, quadrant, id))
-          }
-        />
-      ))}
-    </div>
+    <AnimatePresence mode="wait">
+      {mode === "edit" ? (
+        <motion.div
+          key="edit"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            {QUADRANT_ORDER.map((quadrant) => (
+              <QuadrantPanel
+                key={quadrant}
+                quadrant={quadrant}
+                tasks={state[quadrant]}
+                onAdd={(text) =>
+                  setState((prev) =>
+                    addTask(prev, quadrant, crypto.randomUUID(), text),
+                  )
+                }
+                onEdit={(id, text) =>
+                  setState((prev) => editTask(prev, quadrant, id, text))
+                }
+                onToggleCompleted={(id) => toggleCompleted(quadrant, id)}
+                onDelete={(id) =>
+                  setState((prev) => removeTask(prev, quadrant, id))
+                }
+              />
+            ))}
+          </div>
+
+          <div className="mt-6 flex justify-end">
+            <button
+              type="button"
+              onClick={() => setMode("results")}
+              className="inline-flex items-center gap-2 rounded-full bg-black px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-black/80"
+            >
+              <Save className="size-4" />
+              Save
+            </button>
+          </div>
+        </motion.div>
+      ) : (
+        <motion.div
+          key="results"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-black/45">
+              Click a task to mark it done.
+            </p>
+            <button
+              type="button"
+              onClick={() => setMode("edit")}
+              className="inline-flex items-center gap-2 rounded-full bg-black/5 px-5 py-2.5 text-sm font-medium text-black/60 transition-colors hover:bg-black/10"
+            >
+              <Pencil className="size-3.5" />
+              Edit board
+            </button>
+          </div>
+
+          <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
+            {QUADRANT_ORDER.map((quadrant) => (
+              <ResultsPanel
+                key={quadrant}
+                quadrant={quadrant}
+                tasks={state[quadrant]}
+                onToggleCompleted={(id) => toggleCompleted(quadrant, id)}
+              />
+            ))}
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -185,6 +245,7 @@ function TaskRow({
   return (
     <div className="group flex items-center gap-2 rounded-lg bg-white/70 px-2.5 py-1.5">
       <button
+        type="button"
         onClick={onToggleCompleted}
         aria-label={completed ? "Mark as not completed" : "Mark as completed"}
         className={`flex size-4 shrink-0 items-center justify-center rounded-full border transition-colors ${
@@ -196,6 +257,7 @@ function TaskRow({
         <Check className="size-3" />
       </button>
       <button
+        type="button"
         onClick={() => setEditing(true)}
         className={`flex-1 truncate text-left text-sm ${
           completed ? "text-black/35 line-through" : "text-black/75"
@@ -204,11 +266,59 @@ function TaskRow({
         {text}
       </button>
       <button
+        type="button"
         onClick={onDelete}
         className="text-black/30 opacity-0 transition-opacity group-hover:opacity-100 hover:text-black/60"
       >
         <X className="size-3.5" />
       </button>
+    </div>
+  );
+}
+
+function ResultsPanel({
+  quadrant,
+  tasks,
+  onToggleCompleted,
+}: {
+  quadrant: Quadrant;
+  tasks: Task[];
+  onToggleCompleted: (id: string) => void;
+}) {
+  const meta = QUADRANT_META[quadrant];
+  const style = QUADRANT_STYLE[quadrant];
+
+  return (
+    <div className="flex min-h-[220px] flex-col gap-4 rounded-2xl border border-black/5 bg-white p-5">
+      <div>
+        <span
+          className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium uppercase tracking-wide ${style.chip} ${style.accent}`}
+        >
+          {meta.label}
+        </span>
+        <p className="mt-2 text-xs text-black/45">{meta.subtitle}</p>
+      </div>
+
+      <ul className="flex flex-1 flex-col gap-1.5">
+        {tasks.map((task) => (
+          <li key={task.id}>
+            <button
+              type="button"
+              onClick={() => onToggleCompleted(task.id)}
+              className={`block w-full truncate rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors ${
+                task.completed
+                  ? "text-black/35 line-through"
+                  : "text-black/75 hover:bg-black/[0.03]"
+              }`}
+            >
+              {task.text}
+            </button>
+          </li>
+        ))}
+        {tasks.length === 0 && (
+          <li className="px-2.5 text-sm text-black/35">Nothing here.</li>
+        )}
+      </ul>
     </div>
   );
 }
