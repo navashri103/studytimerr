@@ -47,6 +47,18 @@ def get_today(authed: AuthedUser = Depends(get_authed_user)):
     return _today_row(authed)
 
 
+@router.get("/history", response_model=list[DailyStats])
+def get_history(authed: AuthedUser = Depends(get_authed_user)):
+    result = (
+        authed.client.table("daily_stats")
+        .select("date, focus_minutes, tasks_completed")
+        .eq("user_id", authed.user_id)
+        .order("date")
+        .execute()
+    )
+    return result.data
+
+
 @router.post("/focus-minutes", response_model=DailyStats)
 def add_focus_minutes(
     payload: FocusMinutesPayload, authed: AuthedUser = Depends(get_authed_user)

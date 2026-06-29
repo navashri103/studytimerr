@@ -35,6 +35,12 @@ export function SiteHeader({
         >
           Workspace
         </Link>
+        <Link
+          href="/report"
+          className="text-xs font-medium uppercase tracking-widest text-black/45 transition-colors hover:text-black"
+        >
+          Report
+        </Link>
         <LogoutButton />
       </div>
     </div>
