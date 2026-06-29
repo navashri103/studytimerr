@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   addItem,
   createInitialParetoState,
+  getSplit,
   removeItem,
   toggleVital,
 } from "./pareto";
@@ -42,5 +43,31 @@ describe("pareto list logic", () => {
     state = addItem(state, "2", "Second");
     state = removeItem(state, "1");
     expect(state).toEqual([{ id: "2", text: "Second", vital: false }]);
+  });
+});
+
+describe("getSplit", () => {
+  it("returns zeros for an empty list", () => {
+    expect(getSplit(createInitialParetoState())).toEqual({
+      total: 0,
+      vitalCount: 0,
+      trivialCount: 0,
+      vitalPercent: 0,
+    });
+  });
+
+  it("computes counts and rounded percentage", () => {
+    let state = createInitialParetoState();
+    state = addItem(state, "1", "A");
+    state = addItem(state, "2", "B");
+    state = addItem(state, "3", "C");
+    state = toggleVital(state, "1");
+
+    expect(getSplit(state)).toEqual({
+      total: 3,
+      vitalCount: 1,
+      trivialCount: 2,
+      vitalPercent: 33,
+    });
   });
 });

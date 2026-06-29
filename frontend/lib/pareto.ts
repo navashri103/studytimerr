@@ -29,3 +29,17 @@ export function toggleVital(state: ParetoState, id: string): ParetoState {
 export function removeItem(state: ParetoState, id: string): ParetoState {
   return state.filter((item) => item.id !== id);
 }
+
+export type ParetoSplit = {
+  total: number;
+  vitalCount: number;
+  trivialCount: number;
+  vitalPercent: number;
+};
+
+export function getSplit(state: ParetoState): ParetoSplit {
+  const total = state.length;
+  const vitalCount = state.filter((item) => item.vital).length;
+  const vitalPercent = total === 0 ? 0 : Math.round((vitalCount / total) * 100);
+  return { total, vitalCount, trivialCount: total - vitalCount, vitalPercent };
+}

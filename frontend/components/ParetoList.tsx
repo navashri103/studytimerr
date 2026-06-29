@@ -6,11 +6,13 @@ import { ArrowDown, ArrowUp, Plus, X } from "lucide-react";
 import {
   addItem,
   createInitialParetoState,
+  getSplit,
   removeItem,
   toggleVital,
   type ParetoItem,
   type ParetoState,
 } from "@/lib/pareto";
+import { ParetoChart } from "@/components/ParetoChart";
 
 export function ParetoList() {
   const [state, setState] = useState<ParetoState>(createInitialParetoState);
@@ -27,6 +29,8 @@ export function ParetoList() {
 
   return (
     <div className="flex flex-col gap-6">
+      <ParetoChart split={getSplit(state)} />
+
       <form
         onSubmit={(e) => {
           e.preventDefault();
