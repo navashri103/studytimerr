@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { SpotifyPlayer } from "@/components/SpotifyPlayer";
 import { useAuth } from "@/lib/auth";
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
@@ -20,5 +21,10 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   if (!session && !isAuthRoute) return null;
   if (session && isAuthRoute) return null;
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      {session && <SpotifyPlayer />}
+    </>
+  );
 }
