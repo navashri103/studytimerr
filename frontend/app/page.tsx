@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { PageShell } from "@/components/PageShell";
 import { SiteHeader } from "@/components/SiteHeader";
 import { TechniqueCard } from "@/components/TechniqueCard";
+import { TechniqueQuiz } from "@/components/TechniqueQuiz";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { techniques } from "@/lib/techniques";
@@ -106,7 +107,11 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="mt-16 flex items-center gap-4">
+      <div className="mt-12">
+        <TechniqueQuiz />
+      </div>
+
+      <div className="mt-12 flex items-center gap-4">
         <span className="font-[family-name:var(--font-serif)] text-xl italic text-[#b9872a]">
           Choose your method
         </span>
