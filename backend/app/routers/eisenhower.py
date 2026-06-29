@@ -3,9 +3,11 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from app.db import get_db_client
 from app.deps import AuthedUser, get_authed_user
 
 router = APIRouter(prefix="/eisenhower-tasks", tags=["eisenhower"])
+db = get_db_client()
 
 Quadrant = Literal["do", "decide", "delegate", "delete"]
 
@@ -29,32 +31,34 @@ class UpdateTaskPayload(BaseModel):
 
 @router.get("", response_model=list[Task])
 def list_tasks(authed: AuthedUser = Depends(get_authed_user)):
-    result = (
-        authed.client.table("eisenhower_tasks")
-        .select("id, quadrant, text, completed")
-        .eq("user_id", authed.user_id)
-        .order("created_at")
-        .execute()
+    resp = db.get(
+        "/eisenhower_tasks",
+        params={
+            "select": "id,quadrant,text,completed",
+            "user_id": f"eq.{authed.user_id}",
+            "order": "created_at",
+        },
+        headers=authed.headers(),
     )
-    return result.data
+    resp.raise_for_status()
+    return resp.json()
 
 
 @router.post("", response_model=Task)
 def create_task(
     payload: CreateTaskPayload, authed: AuthedUser = Depends(get_authed_user)
 ):
-    result = (
-        authed.client.table("eisenhower_tasks")
-        .insert(
-            {
-                "user_id": authed.user_id,
-                "quadrant": payload.quadrant,
-                "text": payload.text,
-            }
-        )
-        .execute()
+    resp = db.post(
+        "/eisenhower_tasks",
+        headers={**authed.headers(), "Prefer": "return=representation"},
+        json={
+            "user_id": authed.user_id,
+            "quadrant": payload.quadrant,
+            "text": payload.text,
+        },
     )
-    return result.data[0]
+    resp.raise_for_status()
+    return resp.json()[0]
 
 
 @router.patch("/{task_id}", response_model=Task)
@@ -66,20 +70,24 @@ def update_task(
     updates = {k: v for k, v in payload.model_dump().items() if v is not None}
     if not updates:
         raise HTTPException(status_code=400, detail="No fields to update")
-    result = (
-        authed.client.table("eisenhower_tasks")
-        .update(updates)
-        .eq("id", task_id)
-        .eq("user_id", authed.user_id)
-        .execute()
+    resp = db.patch(
+        "/eisenhower_tasks",
+        params={"id": f"eq.{task_id}", "user_id": f"eq.{authed.user_id}"},
+        headers={**authed.headers(), "Prefer": "return=representation"},
+        json=updates,
     )
-    if not result.data:
+    resp.raise_for_status()
+    rows = resp.json()
+    if not rows:
         raise HTTPException(status_code=404, detail="Task not found")
-    return result.data[0]
+    return rows[0]
 
 
 @router.delete("/{task_id}", status_code=204)
 def delete_task(task_id: str, authed: AuthedUser = Depends(get_authed_user)):
-    authed.client.table("eisenhower_tasks").delete().eq("id", task_id).eq(
-        "user_id", authed.user_id
-    ).execute()
+    resp = db.delete(
+        "/eisenhower_tasks",
+        params={"id": f"eq.{task_id}", "user_id": f"eq.{authed.user_id}"},
+        headers=authed.headers(),
+    )
+    resp.raise_for_status()
