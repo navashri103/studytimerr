@@ -30,7 +30,7 @@ export default function ParetoPage() {
         </ExplanationBlock>
       </div>
 
-      <div className="mt-8 max-w-2xl">
+      <div className="mt-8">
         <ParetoList />
       </div>
     </PageShell>

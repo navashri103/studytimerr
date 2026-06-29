@@ -28,57 +28,60 @@ export function ParetoList() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <ParetoChart split={getSplit(state)} />
-
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          submit();
-        }}
-        className="flex items-center gap-2"
-      >
-        <input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder="Add a task or topic"
-          className="flex-1 rounded-full border border-black/10 bg-white px-4 py-2.5 text-sm text-black/80 outline-none placeholder:text-black/35 focus:border-black/25"
-        />
-        <button
-          type="submit"
-          className="flex size-9 shrink-0 items-center justify-center rounded-full bg-black text-white transition-colors hover:bg-black/80"
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_280px] lg:items-start">
+      <div className="flex flex-col gap-6">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            submit();
+          }}
+          className="flex items-center gap-2"
         >
-          <Plus className="size-4" />
-        </button>
-      </form>
+          <input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder="Add a task or topic"
+            className="flex-1 rounded-full border border-black/10 bg-white px-4 py-2.5 text-sm text-black/80 outline-none placeholder:text-black/35 focus:border-black/25"
+          />
+          <button
+            type="submit"
+            aria-label="Add item"
+            className="flex size-9 shrink-0 items-center justify-center rounded-full bg-black text-white transition-colors hover:bg-black/80"
+          >
+            <Plus className="size-4" />
+          </button>
+        </form>
 
-      <Section
-        title="Vital few"
-        subtitle="The ~20% that drives most of your results"
-        chip="bg-amber-100"
-        accent="text-amber-700"
-        items={vital}
-        emptyHint="Mark an item below as vital to move it here."
-        moveIcon={<ArrowDown className="size-3.5" />}
-        moveLabel="Move to trivial many"
-        onMove={(id) =>
-          setState((prev) => toggleVital(prev, id))
-        }
-        onRemove={(id) => setState((prev) => removeItem(prev, id))}
-      />
+        <Section
+          title="Vital few"
+          subtitle="The ~20% that drives most of your results"
+          chip="bg-amber-100"
+          accent="text-amber-700"
+          items={vital}
+          emptyHint="Mark an item below as vital to move it here."
+          moveIcon={<ArrowDown className="size-3.5" />}
+          moveLabel="Move to trivial many"
+          onMove={(id) => setState((prev) => toggleVital(prev, id))}
+          onRemove={(id) => setState((prev) => removeItem(prev, id))}
+        />
 
-      <Section
-        title="Trivial many"
-        subtitle="The rest — lower impact, lower priority"
-        chip="bg-zinc-200"
-        accent="text-zinc-600"
-        items={trivial}
-        emptyHint="Add a task or topic above to get started."
-        moveIcon={<ArrowUp className="size-3.5" />}
-        moveLabel="Move to vital few"
-        onMove={(id) => setState((prev) => toggleVital(prev, id))}
-        onRemove={(id) => setState((prev) => removeItem(prev, id))}
-      />
+        <Section
+          title="Trivial many"
+          subtitle="The rest — lower impact, lower priority"
+          chip="bg-zinc-200"
+          accent="text-zinc-600"
+          items={trivial}
+          emptyHint="Add a task or topic above to get started."
+          moveIcon={<ArrowUp className="size-3.5" />}
+          moveLabel="Move to vital few"
+          onMove={(id) => setState((prev) => toggleVital(prev, id))}
+          onRemove={(id) => setState((prev) => removeItem(prev, id))}
+        />
+      </div>
+
+      <div className="lg:sticky lg:top-10">
+        <ParetoChart split={getSplit(state)} />
+      </div>
     </div>
   );
 }
