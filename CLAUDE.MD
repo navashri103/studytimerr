@@ -46,4 +46,5 @@ These are explicitly out of scope for the MVP and should only be picked up once 
 
 1. Backend + auth: add Supabase, with login so each user's data (tasks, matrix, etc.) is saved and reloaded on login instead of resetting on refresh. Overrides the "No persistence" / "No user management" MVP rules above, intentionally, for v2 only.
 2. Combined "all techniques at once" view: a separate page where the user can bring multiple technique widgets (Pomodoro, Eisenhower, Pareto, Parkinson's) onto one screen via a plus icon, to use them side by side instead of navigating between separate pages.
+3. Analytics/report page: a separate page showing productive minutes, completed-task analysis, daily streak, and daily/weekly/monthly hours spent, with a GitHub-style contribution heatmap (small boxes per day). Depends on item 1 (Supabase + auth) being done first, since streaks and history need persisted data across sessions to mean anything.
 

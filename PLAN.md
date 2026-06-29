@@ -229,7 +229,8 @@ Each phase below has a goal, detailed scope, explicit success criteria, and a "r
 
 ## V2 (after the MVP, phases 0–8, is complete and tested)
 
-Both items below were explicitly deferred — see CLAUDE.MD for the matching note. Do not start either before Phase 8 sign-off.
+All items below were explicitly deferred — see CLAUDE.MD for the matching note. Do not start any before Phase 8 sign-off.
 
 1. **Backend + auth (Supabase):** add login so each user's data (Pomodoro stats, Eisenhower matrix, Pareto list, Parkinson's tasks) saves and reloads per account instead of resetting on refresh. This overrides the MVP's "No persistence" / "No user management" rules — intentionally, for v2 only.
 2. **Combined "all techniques at once" view:** a separate page where the user adds technique widgets (Pomodoro, Eisenhower, Pareto, Parkinson's) onto one screen via a plus icon, to run them side by side instead of navigating between separate pages. Needs real design work: shared/lifted state per widget, a layout/arrangement model, and responsive behavior with multiple simultaneous timers running.
+3. **Analytics/report page:** a separate page showing total productive minutes, a breakdown of completed tasks, daily streak tracking, and hours spent broken down daily/weekly/monthly, plus a GitHub-style contribution heatmap (small per-day boxes). Depends on item 1 — streaks and historical breakdowns are meaningless without data persisted across sessions, so the Supabase backend must land first.
