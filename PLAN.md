@@ -221,6 +221,15 @@ Each phase below has a goal, detailed scope, explicit success criteria, and a "r
 ---
 
 ## Open questions to resolve before/at the relevant phase
-1. **Phase 3:** Is drag-and-drop between Eisenhower quadrants in scope, or is add/edit/delete within a quadrant enough for MVP?
+1. **Phase 3:** Is drag-and-drop between Eisenhower quadrants in scope, or is add/edit/delete within a quadrant enough for MVP? — Resolved: add/edit/delete/complete within a quadrant, no drag-and-drop, plus a Save → read-only Results view.
 2. **Phase 6:** Confirm Snake as the break game, or pick an alternative.
 3. **Phase 7:** Your Nano Banana palette/mood images — needed before this phase can be finished.
+
+---
+
+## V2 (after the MVP, phases 0–8, is complete and tested)
+
+Both items below were explicitly deferred — see CLAUDE.MD for the matching note. Do not start either before Phase 8 sign-off.
+
+1. **Backend + auth (Supabase):** add login so each user's data (Pomodoro stats, Eisenhower matrix, Pareto list, Parkinson's tasks) saves and reloads per account instead of resetting on refresh. This overrides the MVP's "No persistence" / "No user management" rules — intentionally, for v2 only.
+2. **Combined "all techniques at once" view:** a separate page where the user adds technique widgets (Pomodoro, Eisenhower, Pareto, Parkinson's) onto one screen via a plus icon, to run them side by side instead of navigating between separate pages. Needs real design work: shared/lifted state per widget, a layout/arrangement model, and responsive behavior with multiple simultaneous timers running.

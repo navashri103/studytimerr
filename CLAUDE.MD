@@ -38,5 +38,12 @@
 ## Color Scheme
 -abt this part i want my website to be animated u can give me steps so tht i can give u by getting it frm nano banana as u say i can do those steps i want it to be intractive
 -no emojis in the app
--i want the app to look aesthetic not a simple purple coloured app 
+-i want the app to look aesthetic not a simple purple coloured app  
+
+## V2 (after MVP is complete)
+
+These are explicitly out of scope for the MVP and should only be picked up once all MVP phases are finished and tested:
+
+1. Backend + auth: add Supabase, with login so each user's data (tasks, matrix, etc.) is saved and reloaded on login instead of resetting on refresh. Overrides the "No persistence" / "No user management" MVP rules above, intentionally, for v2 only.
+2. Combined "all techniques at once" view: a separate page where the user can bring multiple technique widgets (Pomodoro, Eisenhower, Pareto, Parkinson's) onto one screen via a plus icon, to use them side by side instead of navigating between separate pages.
 
