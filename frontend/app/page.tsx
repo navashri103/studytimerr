@@ -44,7 +44,35 @@ export default function Home() {
           </Link>
         </motion.div>
 
-        <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-gradient-to-br from-orange-100 via-sky-100 to-violet-100" />
+        <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-gradient-to-br from-orange-100 via-sky-100 to-violet-100">
+          <motion.div
+            animate={{ y: [0, -8, 0] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute left-6 top-8 w-44 rounded-2xl border border-white/60 bg-white/50 p-4 shadow-lg backdrop-blur-md"
+          >
+            <p className="text-xs uppercase tracking-wide text-black/50">
+              Technique
+            </p>
+            <p className="mt-1 font-[family-name:var(--font-serif)] text-xl text-[#1f231a]">
+              Pomodoro
+            </p>
+            <p className="mt-1 text-xs text-black/50">25:00 focus session</p>
+          </motion.div>
+
+          <motion.div
+            animate={{ y: [0, 8, 0] }}
+            transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute bottom-8 right-6 w-40 rounded-2xl border border-white/60 bg-white/50 p-4 shadow-lg backdrop-blur-md"
+          >
+            <p className="text-xs uppercase tracking-wide text-black/50">
+              Focus streak
+            </p>
+            <p className="mt-1 font-[family-name:var(--font-serif)] text-xl text-[#1f231a]">
+              3 / 4
+            </p>
+            <p className="mt-1 text-xs text-black/50">sessions today</p>
+          </motion.div>
+        </div>
       </div>
 
       <div className="mt-16 flex items-center gap-4">
