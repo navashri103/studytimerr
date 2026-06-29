@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FullscreenToggle } from "@/components/FullscreenToggle";
 
 export function SiteHeader({
   backLink = false,
@@ -17,14 +18,17 @@ export function SiteHeader({
       >
         StudyTimer
       </Link>
-      {backLink && (
-        <Link
-          href="/"
-          className="text-xs font-medium uppercase tracking-widest text-black/45 transition-colors hover:text-black"
-        >
-          Back to dashboard
-        </Link>
-      )}
+      <div className="flex items-center gap-4">
+        {backLink && (
+          <Link
+            href="/"
+            className="text-xs font-medium uppercase tracking-widest text-black/45 transition-colors hover:text-black"
+          >
+            Back to dashboard
+          </Link>
+        )}
+        <FullscreenToggle />
+      </div>
     </div>
   );
 }
