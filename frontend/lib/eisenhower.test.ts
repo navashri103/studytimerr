@@ -4,6 +4,7 @@ import {
   createInitialEisenhowerState,
   editTask,
   removeTask,
+  toggleTaskCompleted,
 } from "./eisenhower";
 
 describe("eisenhower matrix logic", () => {
@@ -15,9 +16,11 @@ describe("eisenhower matrix logic", () => {
     expect(state.delete).toEqual([]);
   });
 
-  it("adds a task to the given quadrant only", () => {
+  it("adds a task to the given quadrant only, uncompleted", () => {
     const state = addTask(createInitialEisenhowerState(), "do", "1", "Ship the report");
-    expect(state.do).toEqual([{ id: "1", text: "Ship the report" }]);
+    expect(state.do).toEqual([
+      { id: "1", text: "Ship the report", completed: false },
+    ]);
     expect(state.decide).toEqual([]);
   });
 
@@ -35,8 +38,8 @@ describe("eisenhower matrix logic", () => {
     state = addTask(state, "decide", "2", "Second");
     state = editTask(state, "decide", "1", "First, edited");
     expect(state.decide).toEqual([
-      { id: "1", text: "First, edited" },
-      { id: "2", text: "Second" },
+      { id: "1", text: "First, edited", completed: false },
+      { id: "2", text: "Second", completed: false },
     ]);
   });
 
@@ -46,12 +49,26 @@ describe("eisenhower matrix logic", () => {
     expect(state.do[0].text).toBe("Keep me");
   });
 
+  it("toggles a task's completed state without affecting others", () => {
+    let state = createInitialEisenhowerState();
+    state = addTask(state, "do", "1", "First");
+    state = addTask(state, "do", "2", "Second");
+    state = toggleTaskCompleted(state, "do", "1");
+    expect(state.do[0].completed).toBe(true);
+    expect(state.do[1].completed).toBe(false);
+
+    state = toggleTaskCompleted(state, "do", "1");
+    expect(state.do[0].completed).toBe(false);
+  });
+
   it("removes a task from its quadrant only", () => {
     let state = createInitialEisenhowerState();
     state = addTask(state, "delegate", "1", "Ask Sam");
     state = addTask(state, "delegate", "2", "Ask Lee");
     state = removeTask(state, "delegate", "1");
-    expect(state.delegate).toEqual([{ id: "2", text: "Ask Lee" }]);
+    expect(state.delegate).toEqual([
+      { id: "2", text: "Ask Lee", completed: false },
+    ]);
   });
 
   it("keeps quadrants independent of each other", () => {
@@ -60,6 +77,8 @@ describe("eisenhower matrix logic", () => {
     state = addTask(state, "delete", "1", "Delete task");
     state = removeTask(state, "do", "1");
     expect(state.do).toEqual([]);
-    expect(state.delete).toEqual([{ id: "1", text: "Delete task" }]);
+    expect(state.delete).toEqual([
+      { id: "1", text: "Delete task", completed: false },
+    ]);
   });
 });

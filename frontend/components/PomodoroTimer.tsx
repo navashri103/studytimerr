@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useReducer } from "react";
 import { motion } from "framer-motion";
-import { Pause, Play, RotateCcw } from "lucide-react";
+import { Pause, Play, RotateCcw, SkipForward } from "lucide-react";
 import {
   POMODORO_DURATIONS,
   SESSIONS_BEFORE_LONG_BREAK,
@@ -131,6 +131,13 @@ export function PomodoroTimer() {
         >
           <RotateCcw className="size-4" />
           Reset
+        </button>
+        <button
+          onClick={() => dispatch({ type: "SKIP" })}
+          className="inline-flex items-center gap-2 rounded-full bg-black/5 px-5 py-3 text-sm font-medium text-black/60 transition-colors hover:bg-black/10"
+        >
+          <SkipForward className="size-4" />
+          Skip
         </button>
       </div>
     </div>

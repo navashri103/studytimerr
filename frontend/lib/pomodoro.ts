@@ -28,6 +28,7 @@ export type PomodoroAction =
   | { type: "START" }
   | { type: "PAUSE" }
   | { type: "RESET" }
+  | { type: "SKIP" }
   | { type: "TICK" };
 
 function advancePhase(
@@ -62,6 +63,18 @@ export function pomodoroReducer(
         secondsLeft: POMODORO_DURATIONS[state.phase],
         isRunning: false,
       };
+    case "SKIP": {
+      const { phase, completedFocusSessions } = advancePhase(
+        state.phase,
+        state.completedFocusSessions,
+      );
+      return {
+        ...state,
+        phase,
+        completedFocusSessions,
+        secondsLeft: POMODORO_DURATIONS[phase],
+      };
+    }
     case "TICK": {
       if (!state.isRunning) return state;
       if (state.secondsLeft > 1) {

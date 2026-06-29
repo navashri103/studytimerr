@@ -2,15 +2,17 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Plus, X } from "lucide-react";
+import { Check, Plus, X } from "lucide-react";
 import {
   QUADRANT_META,
   addTask,
   createInitialEisenhowerState,
   editTask,
   removeTask,
+  toggleTaskCompleted,
   type EisenhowerState,
   type Quadrant,
+  type Task,
 } from "@/lib/eisenhower";
 
 const QUADRANT_STYLE: Record<Quadrant, { chip: string; accent: string }> = {
@@ -42,6 +44,9 @@ export function EisenhowerBoard() {
           onEdit={(id, text) =>
             setState((prev) => editTask(prev, quadrant, id, text))
           }
+          onToggleCompleted={(id) =>
+            setState((prev) => toggleTaskCompleted(prev, quadrant, id))
+          }
           onDelete={(id) =>
             setState((prev) => removeTask(prev, quadrant, id))
           }
@@ -56,12 +61,14 @@ function QuadrantPanel({
   tasks,
   onAdd,
   onEdit,
+  onToggleCompleted,
   onDelete,
 }: {
   quadrant: Quadrant;
-  tasks: { id: string; text: string }[];
+  tasks: Task[];
   onAdd: (text: string) => void;
   onEdit: (id: string, text: string) => void;
+  onToggleCompleted: (id: string) => void;
   onDelete: (id: string) => void;
 }) {
   const [draft, setDraft] = useState("");
@@ -97,7 +104,9 @@ function QuadrantPanel({
             >
               <TaskRow
                 text={task.text}
+                completed={task.completed}
                 onSave={(text) => onEdit(task.id, text)}
+                onToggleCompleted={() => onToggleCompleted(task.id)}
                 onDelete={() => onDelete(task.id)}
               />
             </motion.li>
@@ -134,11 +143,15 @@ function QuadrantPanel({
 
 function TaskRow({
   text,
+  completed,
   onSave,
+  onToggleCompleted,
   onDelete,
 }: {
   text: string;
+  completed: boolean;
   onSave: (text: string) => void;
+  onToggleCompleted: () => void;
   onDelete: () => void;
 }) {
   const [editing, setEditing] = useState(false);
@@ -170,10 +183,23 @@ function TaskRow({
   }
 
   return (
-    <div className="group flex items-center justify-between gap-2 rounded-lg bg-white/70 px-2.5 py-1.5">
+    <div className="group flex items-center gap-2 rounded-lg bg-white/70 px-2.5 py-1.5">
+      <button
+        onClick={onToggleCompleted}
+        aria-label={completed ? "Mark as not completed" : "Mark as completed"}
+        className={`flex size-4 shrink-0 items-center justify-center rounded-full border transition-colors ${
+          completed
+            ? "border-black/60 bg-black/80 text-white"
+            : "border-black/25 text-transparent"
+        }`}
+      >
+        <Check className="size-3" />
+      </button>
       <button
         onClick={() => setEditing(true)}
-        className="flex-1 truncate text-left text-sm text-black/75"
+        className={`flex-1 truncate text-left text-sm ${
+          completed ? "text-black/35 line-through" : "text-black/75"
+        }`}
       >
         {text}
       </button>

@@ -3,6 +3,7 @@ export type Quadrant = "do" | "decide" | "delegate" | "delete";
 export type Task = {
   id: string;
   text: string;
+  completed: boolean;
 };
 
 export type EisenhowerState = Record<Quadrant, Task[]>;
@@ -31,7 +32,7 @@ export function addTask(
   if (!trimmed) return state;
   return {
     ...state,
-    [quadrant]: [...state[quadrant], { id, text: trimmed }],
+    [quadrant]: [...state[quadrant], { id, text: trimmed, completed: false }],
   };
 }
 
@@ -47,6 +48,19 @@ export function editTask(
     ...state,
     [quadrant]: state[quadrant].map((task) =>
       task.id === id ? { ...task, text: trimmed } : task,
+    ),
+  };
+}
+
+export function toggleTaskCompleted(
+  state: EisenhowerState,
+  quadrant: Quadrant,
+  id: string,
+): EisenhowerState {
+  return {
+    ...state,
+    [quadrant]: state[quadrant].map((task) =>
+      task.id === id ? { ...task, completed: !task.completed } : task,
     ),
   };
 }

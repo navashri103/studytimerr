@@ -104,6 +104,34 @@ describe("pomodoroReducer", () => {
     expect(state.secondsLeft).toBe(POMODORO_DURATIONS.focus);
     expect(state.isRunning).toBe(false);
   });
+
+  it("SKIP advances to the next phase immediately, even while paused", () => {
+    let state = createInitialPomodoroState();
+    state = pomodoroReducer(state, { type: "SKIP" });
+    expect(state.phase).toBe("shortBreak");
+    expect(state.secondsLeft).toBe(POMODORO_DURATIONS.shortBreak);
+    expect(state.completedFocusSessions).toBe(1);
+    expect(state.isRunning).toBe(false);
+  });
+
+  it("SKIP preserves the running state instead of forcing it", () => {
+    let state = pomodoroReducer(createInitialPomodoroState(), {
+      type: "START",
+    });
+    state = pomodoroReducer(state, { type: "SKIP" });
+    expect(state.isRunning).toBe(true);
+    expect(state.phase).toBe("shortBreak");
+  });
+
+  it("SKIP through a full cycle reaches longBreak then resets, same as ticking", () => {
+    let state = createInitialPomodoroState();
+    for (let i = 0; i < 4; i++) {
+      state = pomodoroReducer(state, { type: "SKIP" }); // focus -> break
+      state = pomodoroReducer(state, { type: "SKIP" }); // break -> focus (or longBreak after 4th)
+    }
+    expect(state.phase).toBe("focus");
+    expect(state.completedFocusSessions).toBe(0);
+  });
 });
 
 describe("formatTime", () => {
