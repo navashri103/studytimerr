@@ -1,2 +1,14 @@
+# Dev tool configs
 .hintrc
+.claude/
+
+# AI/planning files
+CLAUDE.MD
+PLAN.md
+REVIEW.md
+TUTORIAL.md
+frontend/CLAUDE.md
+frontend/AGENTS.md
+
+# Temp files
 *.mjs.tmp
