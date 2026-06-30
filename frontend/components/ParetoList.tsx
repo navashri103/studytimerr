@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowDown, ArrowUp, Plus, X } from "lucide-react";
-import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import {
   addItem,
@@ -19,13 +18,13 @@ import { ParetoChart } from "@/components/ParetoChart";
 type ApiItem = { id: string; text: string; vital: boolean };
 
 export function ParetoList() {
-  const { session } = useAuth();
+  const { session, fetchWithAuth } = useAuth();
   const [state, setState] = useState<ParetoState>(createInitialParetoState);
   const [draft, setDraft] = useState("");
 
   useEffect(() => {
     if (!session) return;
-    apiFetch<ApiItem[]>("/pareto-items", { token: session.accessToken })
+    fetchWithAuth<ApiItem[]>("/pareto-items")
       .then((items) => {
         setState((prev) => {
           const knownIds = new Set(prev.map((item) => item.id));
@@ -33,16 +32,15 @@ export function ParetoList() {
         });
       })
       .catch(() => {});
-  }, [session]);
+  }, [session, fetchWithAuth]);
 
   const vital = state.filter((item) => item.vital);
   const trivial = state.filter((item) => !item.vital);
 
   function submit() {
     if (!draft.trim() || !session) return;
-    apiFetch<ApiItem>("/pareto-items", {
+    fetchWithAuth<ApiItem>("/pareto-items", {
       method: "POST",
-      token: session.accessToken,
       body: JSON.stringify({ text: draft }),
     })
       .then((item) => {
@@ -57,9 +55,8 @@ export function ParetoList() {
     const item = state.find((i) => i.id === id);
     if (!item) return;
     setState((prev) => toggleVital(prev, id));
-    apiFetch(`/pareto-items/${id}`, {
+    fetchWithAuth(`/pareto-items/${id}`, {
       method: "PATCH",
-      token: session.accessToken,
       body: JSON.stringify({ vital: !item.vital }),
     }).catch(() => {});
   }
@@ -67,9 +64,8 @@ export function ParetoList() {
   function remove(id: string) {
     if (!session) return;
     setState((prev) => removeItem(prev, id));
-    apiFetch(`/pareto-items/${id}`, {
+    fetchWithAuth(`/pareto-items/${id}`, {
       method: "DELETE",
-      token: session.accessToken,
     }).catch(() => {});
   }
 

@@ -2,14 +2,18 @@ import { test as setup } from "@playwright/test";
 
 const AUTH_FILE = "playwright/.auth/user.json";
 
-setup("create a test account and save its session", async ({ page }) => {
-  await page.goto("/login");
-  await page.getByText("Need an account? Sign up").click();
+// Uses a pre-existing verified test account rather than signing up fresh on
+// every run — signup now requires email confirmation, so creating a new
+// account each run would hang waiting for a verification email.
+const TEST_EMAIL = "studytimer.devtest3@gmail.com";
+const TEST_PASSWORD = "TestPassword123!";
 
-  const email = `pw-e2e-${Date.now()}@gmail.com`;
-  await page.getByPlaceholder("Email").fill(email);
-  await page.getByPlaceholder("Password").fill("TestPassword123!");
-  await page.getByRole("button", { name: "Sign up" }).click();
+setup("log in with the test account and save the session", async ({ page }) => {
+  await page.goto("/login");
+
+  await page.getByPlaceholder("Email").fill(TEST_EMAIL);
+  await page.getByPlaceholder("Password").fill(TEST_PASSWORD);
+  await page.getByRole("button", { name: "Log in" }).click();
 
   await page.waitForFunction(() => window.location.pathname === "/");
   await page.context().storageState({ path: AUTH_FILE });

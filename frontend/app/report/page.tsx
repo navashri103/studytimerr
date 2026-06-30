@@ -5,7 +5,6 @@ import { CalendarDays, Flame, TrendingUp, type LucideIcon } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
 import { ReportHeatmap } from "@/components/ReportHeatmap";
 import { SiteHeader } from "@/components/SiteHeader";
-import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import {
   buildHeatmap,
@@ -25,17 +24,15 @@ function isoDaysAgo(days: number): string {
 }
 
 export default function ReportPage() {
-  const { session } = useAuth();
+  const { session, fetchWithAuth } = useAuth();
   const [history, setHistory] = useState<DailyStat[] | null>(null);
 
   useEffect(() => {
     if (!session) return;
-    apiFetch<DailyStat[]>("/daily-stats/history", {
-      token: session.accessToken,
-    })
+    fetchWithAuth<DailyStat[]>("/daily-stats/history")
       .then(setHistory)
       .catch(() => setHistory([]));
-  }, [session]);
+  }, [session, fetchWithAuth]);
 
   const today = todayISO();
   const streak = history ? computeStreak(history, today) : null;

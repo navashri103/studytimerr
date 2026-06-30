@@ -8,7 +8,6 @@ import { PageShell } from "@/components/PageShell";
 import { SiteHeader } from "@/components/SiteHeader";
 import { TechniqueCard } from "@/components/TechniqueCard";
 import { TechniqueQuiz } from "@/components/TechniqueQuiz";
-import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { techniques } from "@/lib/techniques";
 
@@ -26,15 +25,15 @@ type DailyStats = {
 };
 
 export default function Home() {
-  const { session } = useAuth();
+  const { session, fetchWithAuth } = useAuth();
   const [stats, setStats] = useState<DailyStats | null>(null);
 
   useEffect(() => {
     if (!session) return;
-    apiFetch<DailyStats>("/daily-stats/today", { token: session.accessToken })
+    fetchWithAuth<DailyStats>("/daily-stats/today")
       .then(setStats)
       .catch(() => setStats(null));
-  }, [session]);
+  }, [session, fetchWithAuth]);
 
   return (
     <PageShell>

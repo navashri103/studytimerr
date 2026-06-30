@@ -19,6 +19,10 @@ class Session(BaseModel):
     email: str
 
 
+class RefreshPayload(BaseModel):
+    refresh_token: str
+
+
 @router.post("/signup", response_model=Session)
 def signup(credentials: Credentials):
     client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
@@ -38,6 +42,27 @@ def signup(credentials: Credentials):
                 "in the Supabase dashboard for this demo."
             ),
         )
+
+    return Session(
+        access_token=result.session.access_token,
+        refresh_token=result.session.refresh_token,
+        user_id=result.user.id,
+        email=result.user.email,
+    )
+
+
+@router.post("/refresh", response_model=Session)
+def refresh(payload: RefreshPayload):
+    client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+    try:
+        result = client.auth.refresh_session(payload.refresh_token)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=401, detail="Invalid or expired refresh token"
+        ) from exc
+
+    if not result.session:
+        raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
 
     return Session(
         access_token=result.session.access_token,

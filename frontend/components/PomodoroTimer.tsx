@@ -4,7 +4,6 @@ import { useCallback, useEffect, useReducer, useRef } from "react";
 import { motion } from "framer-motion";
 import { Pause, Play, RotateCcw, SkipForward } from "lucide-react";
 import { BreakGames } from "@/components/BreakGames";
-import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import {
   POMODORO_DURATIONS,
@@ -38,7 +37,7 @@ const RADIUS = 88;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 export function PomodoroTimer() {
-  const { session } = useAuth();
+  const { session, fetchWithAuth } = useAuth();
   const [state, dispatch] = useReducer(
     pomodoroReducer,
     undefined,
@@ -54,14 +53,13 @@ export function PomodoroTimer() {
 
   useEffect(() => {
     if (previousPhase.current === "focus" && state.phase !== "focus" && session) {
-      apiFetch("/daily-stats/focus-minutes", {
+      fetchWithAuth("/daily-stats/focus-minutes", {
         method: "POST",
-        token: session.accessToken,
         body: JSON.stringify({ minutes: POMODORO_DURATIONS.focus / 60 }),
       }).catch(() => {});
     }
     previousPhase.current = state.phase;
-  }, [state.phase, session]);
+  }, [state.phase, session, fetchWithAuth]);
 
   useEffect(() => {
     if (!state.isRunning || state.secondsLeft !== WARNING_SECONDS) return;

@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Pencil, Plus, Save, X } from "lucide-react";
-import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import {
   QUADRANT_META,
@@ -36,7 +35,7 @@ type ApiTask = {
 };
 
 export function EisenhowerBoard() {
-  const { session } = useAuth();
+  const { session, fetchWithAuth } = useAuth();
   const [state, setState] = useState<EisenhowerState>(
     createInitialEisenhowerState,
   );
@@ -44,7 +43,7 @@ export function EisenhowerBoard() {
 
   useEffect(() => {
     if (!session) return;
-    apiFetch<ApiTask[]>("/eisenhower-tasks", { token: session.accessToken })
+    fetchWithAuth<ApiTask[]>("/eisenhower-tasks")
       .then((tasks) => {
         setState((prev) => {
           const next = createInitialEisenhowerState();
@@ -64,13 +63,12 @@ export function EisenhowerBoard() {
         });
       })
       .catch(() => {});
-  }, [session]);
+  }, [session, fetchWithAuth]);
 
   function addRemoteTask(quadrant: Quadrant, text: string) {
     if (!session) return;
-    apiFetch<ApiTask>("/eisenhower-tasks", {
+    fetchWithAuth<ApiTask>("/eisenhower-tasks", {
       method: "POST",
-      token: session.accessToken,
       body: JSON.stringify({ quadrant, text }),
     })
       .then((task) => {
@@ -82,9 +80,8 @@ export function EisenhowerBoard() {
   function editRemoteTask(quadrant: Quadrant, id: string, text: string) {
     if (!session) return;
     setState((prev) => editTask(prev, quadrant, id, text));
-    apiFetch(`/eisenhower-tasks/${id}`, {
+    fetchWithAuth(`/eisenhower-tasks/${id}`, {
       method: "PATCH",
-      token: session.accessToken,
       body: JSON.stringify({ text }),
     }).catch(() => {});
   }
@@ -95,14 +92,12 @@ export function EisenhowerBoard() {
     if (!task) return;
     const nextCompleted = !task.completed;
     setState((prev) => toggleTaskCompleted(prev, quadrant, id));
-    apiFetch(`/eisenhower-tasks/${id}`, {
+    fetchWithAuth(`/eisenhower-tasks/${id}`, {
       method: "PATCH",
-      token: session.accessToken,
       body: JSON.stringify({ completed: nextCompleted }),
     }).catch(() => {});
-    apiFetch("/daily-stats/tasks-completed", {
+    fetchWithAuth("/daily-stats/tasks-completed", {
       method: "POST",
-      token: session.accessToken,
       body: JSON.stringify({ delta: nextCompleted ? 1 : -1 }),
     }).catch(() => {});
   }
@@ -110,9 +105,8 @@ export function EisenhowerBoard() {
   function deleteRemoteTask(quadrant: Quadrant, id: string) {
     if (!session) return;
     setState((prev) => removeTask(prev, quadrant, id));
-    apiFetch(`/eisenhower-tasks/${id}`, {
+    fetchWithAuth(`/eisenhower-tasks/${id}`, {
       method: "DELETE",
-      token: session.accessToken,
     }).catch(() => {});
   }
 

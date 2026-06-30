@@ -7,12 +7,19 @@ import {
   useEffect,
   useState,
 } from "react";
-import { apiFetch } from "@/lib/api";
+import { ApiError, apiFetch } from "@/lib/api";
 
 type Session = {
   accessToken: string;
   refreshToken: string;
   userId: string;
+  email: string;
+};
+
+type SessionResponse = {
+  access_token: string;
+  refresh_token: string;
+  user_id: string;
   email: string;
 };
 
@@ -22,6 +29,7 @@ type AuthState = {
   signup: (email: string, password: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  fetchWithAuth: <T>(path: string, options?: RequestInit) => Promise<T>;
 };
 
 const STORAGE_KEY = "studytimer:session";
@@ -37,6 +45,15 @@ function readStoredSession(): Session | null {
   } catch {
     return null;
   }
+}
+
+function toSession(result: SessionResponse): Session {
+  return {
+    accessToken: result.access_token,
+    refreshToken: result.refresh_token,
+    userId: result.user_id,
+    email: result.email,
+  };
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -58,55 +75,70 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSession(next);
   }, []);
 
+  const logout = useCallback(() => {
+    window.localStorage.removeItem(STORAGE_KEY);
+    setSession(null);
+  }, []);
+
   const signup = useCallback(
     async (email: string, password: string) => {
-      const result = await apiFetch<{
-        access_token: string;
-        refresh_token: string;
-        user_id: string;
-        email: string;
-      }>("/auth/signup", {
+      const result = await apiFetch<SessionResponse>("/auth/signup", {
         method: "POST",
         body: JSON.stringify({ email, password }),
       });
-      persist({
-        accessToken: result.access_token,
-        refreshToken: result.refresh_token,
-        userId: result.user_id,
-        email: result.email,
-      });
+      persist(toSession(result));
     },
     [persist],
   );
 
   const login = useCallback(
     async (email: string, password: string) => {
-      const result = await apiFetch<{
-        access_token: string;
-        refresh_token: string;
-        user_id: string;
-        email: string;
-      }>("/auth/login", {
+      const result = await apiFetch<SessionResponse>("/auth/login", {
         method: "POST",
         body: JSON.stringify({ email, password }),
       });
-      persist({
-        accessToken: result.access_token,
-        refreshToken: result.refresh_token,
-        userId: result.user_id,
-        email: result.email,
-      });
+      persist(toSession(result));
     },
     [persist],
   );
 
-  const logout = useCallback(() => {
-    window.localStorage.removeItem(STORAGE_KEY);
-    setSession(null);
-  }, []);
+  const refreshSession = useCallback(async (): Promise<Session | null> => {
+    if (!session) return null;
+    try {
+      const result = await apiFetch<SessionResponse>("/auth/refresh", {
+        method: "POST",
+        body: JSON.stringify({ refresh_token: session.refreshToken }),
+      });
+      const next = toSession(result);
+      persist(next);
+      return next;
+    } catch {
+      logout();
+      return null;
+    }
+  }, [session, persist, logout]);
+
+  const fetchWithAuth = useCallback(
+    async <T,>(path: string, options: RequestInit = {}): Promise<T> => {
+      if (!session) throw new ApiError(401, "Not authenticated");
+      try {
+        return await apiFetch<T>(path, { ...options, token: session.accessToken });
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 401) {
+          const refreshed = await refreshSession();
+          if (!refreshed) throw err;
+          return apiFetch<T>(path, { ...options, token: refreshed.accessToken });
+        }
+        throw err;
+      }
+    },
+    [session, refreshSession],
+  );
 
   return (
-    <AuthContext.Provider value={{ session, loading, signup, login, logout }}>
+    <AuthContext.Provider
+      value={{ session, loading, signup, login, logout, fetchWithAuth }}
+    >
       {children}
     </AuthContext.Provider>
   );
