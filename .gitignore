@@ -10,5 +10,9 @@ TUTORIAL.md
 frontend/CLAUDE.md
 frontend/AGENTS.md
 
+# Test artifacts
+frontend/test-results/
+frontend/playwright-report/
+
 # Temp files
 *.mjs.tmp
