@@ -23,10 +23,12 @@ type SessionResponse = {
   email: string;
 };
 
+type SignupResult = { confirmEmail: true } | { confirmEmail: false; session: Session };
+
 type AuthState = {
   session: Session | null;
   loading: boolean;
-  signup: (email: string, password: string) => Promise<void>;
+  signup: (email: string, password: string) => Promise<SignupResult>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   fetchWithAuth: <T>(path: string, options?: RequestInit) => Promise<T>;
@@ -81,12 +83,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signup = useCallback(
-    async (email: string, password: string) => {
-      const result = await apiFetch<SessionResponse>("/auth/signup", {
-        method: "POST",
-        body: JSON.stringify({ email, password }),
-      });
-      persist(toSession(result));
+    async (email: string, password: string): Promise<SignupResult> => {
+      const result = await apiFetch<SessionResponse | { confirm_email: boolean }>(
+        "/auth/signup",
+        { method: "POST", body: JSON.stringify({ email, password }) },
+      );
+      if ("confirm_email" in result && result.confirm_email) {
+        return { confirmEmail: true };
+      }
+      const session = toSession(result as SessionResponse);
+      persist(session);
+      return { confirmEmail: false, session };
     },
     [persist],
   );

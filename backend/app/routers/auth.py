@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr
 from supabase import create_client
 
@@ -23,7 +24,7 @@ class RefreshPayload(BaseModel):
     refresh_token: str
 
 
-@router.post("/signup", response_model=Session)
+@router.post("/signup")
 def signup(credentials: Credentials):
     client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
     try:
@@ -34,13 +35,11 @@ def signup(credentials: Credentials):
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     if not result.session:
-        raise HTTPException(
-            status_code=400,
-            detail=(
-                "Signup succeeded but no session was returned. Disable "
-                '"Confirm email" under Authentication > Sign In / Providers '
-                "in the Supabase dashboard for this demo."
-            ),
+        # Email confirmation is enabled — signup succeeded but the user must
+        # verify their email before they can log in.
+        return JSONResponse(
+            status_code=202,
+            content={"confirm_email": True},
         )
 
     return Session(

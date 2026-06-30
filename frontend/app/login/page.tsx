@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -20,13 +21,44 @@ export default function LoginPage() {
       if (mode === "login") {
         await login(email, password);
       } else {
-        await signup(email, password);
+        const result = await signup(email, password);
+        if (result.confirmEmail) {
+          setAwaitingConfirmation(true);
+        }
       }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong");
     } finally {
       setSubmitting(false);
     }
+  }
+
+  if (awaitingConfirmation) {
+    return (
+      <main className="flex flex-1 items-center justify-center px-4">
+        <div className="w-full max-w-sm rounded-[2rem] bg-[#fdfcf8] p-8 shadow-2xl shadow-black/15 text-center">
+          <h1 className="font-[family-name:var(--font-serif)] text-3xl text-[#1f231a]">
+            Check your email
+          </h1>
+          <p className="mt-4 text-sm leading-relaxed text-black/55">
+            We sent a confirmation link to{" "}
+            <strong className="text-black/80">{email}</strong>. Click it to
+            verify your account, then come back here to log in.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setAwaitingConfirmation(false);
+              setMode("login");
+              setPassword("");
+            }}
+            className="mt-6 text-xs font-medium uppercase tracking-widest text-black/40 hover:text-black/70"
+          >
+            Go to log in
+          </button>
+        </div>
+      </main>
+    );
   }
 
   return (
