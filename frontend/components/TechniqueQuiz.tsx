@@ -85,7 +85,7 @@ export function TechniqueQuiz() {
                 {result.name}
               </p>
               <p className="mt-1 text-sm text-black/55">{result.description}</p>
-              <div className="mt-4 flex items-center gap-3">
+              <div className="mt-4 flex flex-wrap items-center gap-3">
                 <Link
                   href={result.href}
                   className="inline-flex items-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-black/80"

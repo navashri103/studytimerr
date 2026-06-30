@@ -335,7 +335,7 @@ function TaskRow({
       <button
         type="button"
         onClick={onDelete}
-        className="text-black/30 opacity-0 transition-opacity group-hover:opacity-100 hover:text-black/60"
+        className="text-black/30 transition-opacity hover:text-black/60 sm:opacity-0 sm:group-hover:opacity-100"
       >
         <X className="size-3.5" />
       </button>

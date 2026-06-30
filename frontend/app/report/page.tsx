@@ -26,12 +26,19 @@ function isoDaysAgo(days: number): string {
 export default function ReportPage() {
   const { session, fetchWithAuth } = useAuth();
   const [history, setHistory] = useState<DailyStat[] | null>(null);
+  const [fetchError, setFetchError] = useState(false);
 
   useEffect(() => {
     if (!session) return;
     fetchWithAuth<DailyStat[]>("/daily-stats/history")
-      .then(setHistory)
-      .catch(() => setHistory([]));
+      .then((data) => {
+        setHistory(data);
+        setFetchError(false);
+      })
+      .catch(() => {
+        setHistory([]);
+        setFetchError(true);
+      });
   }, [session, fetchWithAuth]);
 
   const today = todayISO();
@@ -51,6 +58,12 @@ export default function ReportPage() {
         How much you&apos;ve been studying, day by day.
       </p>
 
+      {fetchError && (
+        <p className="mt-4 rounded-xl bg-orange-50 px-4 py-3 text-sm text-orange-700">
+          Could not load your stats — check your connection and refresh the page.
+        </p>
+      )}
+
       <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-3">
         <StatCard
           icon={Flame}
@@ -58,7 +71,7 @@ export default function ReportPage() {
           accent="text-amber-700"
           label="Day streak"
           value={streak === null ? "—" : `${streak}`}
-          sub={streak === null ? undefined : streak === 1 ? "day" : "days"}
+          sub={streak === null || streak === 0 ? undefined : streak === 1 ? "day" : "days"}
         />
         <StatCard
           icon={TrendingUp}

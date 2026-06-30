@@ -23,8 +23,8 @@ export default function EisenhowerPage() {
           </p>
           <p>
             Add your own tasks to each quadrant below, click any task to
-            edit it, and remove it when you&apos;re done. Nothing here is
-            saved — refreshing the page clears the board.
+            edit it, and remove it when you&apos;re done. Your tasks are
+            saved automatically and will be here when you come back.
           </p>
         </ExplanationBlock>
       </div>

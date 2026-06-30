@@ -46,7 +46,7 @@ export function SpotifyPlayer() {
   }
 
   return (
-    <div className="fixed bottom-5 left-5 z-40 w-[320px] overflow-hidden rounded-2xl bg-[#121212] shadow-2xl">
+    <div className="fixed bottom-5 left-5 z-40 w-80 max-w-[calc(100vw-2.5rem)] overflow-hidden rounded-2xl bg-[#121212] shadow-2xl">
       <div className="flex items-center justify-between px-3 py-2">
         <span className="flex items-center gap-1.5 text-xs font-medium text-white/70">
           <Music className="size-3.5" />

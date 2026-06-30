@@ -59,6 +59,9 @@ export default function LoginPage() {
             placeholder="Password"
             className="rounded-full border border-black/10 bg-white px-4 py-2.5 text-sm text-black/80 outline-none placeholder:text-black/35 focus:border-black/25"
           />
+          {mode === "signup" && (
+            <p className="px-1 text-xs text-black/40">Use at least 6 characters.</p>
+          )}
 
           {error && <p className="text-sm text-orange-700">{error}</p>}
 

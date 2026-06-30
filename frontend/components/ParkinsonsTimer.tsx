@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useReducer, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Pause, Play, RotateCcw } from "lucide-react";
 import { formatTime } from "@/lib/pomodoro";
+import { useAuth } from "@/lib/auth";
 import {
   createInitialParkinsonsState,
   parkinsonsReducer,
@@ -16,11 +17,13 @@ const RADIUS = 88;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 export function ParkinsonsTimer() {
+  const { session, fetchWithAuth } = useAuth();
   const [state, dispatch] = useReducer(
     parkinsonsReducer,
     undefined,
     createInitialParkinsonsState,
   );
+  const prevSecondsLeft = useRef(0);
 
   useEffect(() => {
     if (!state.isRunning) return;
@@ -32,6 +35,21 @@ export function ParkinsonsTimer() {
     if (!state.isRunning || state.secondsLeft !== WARNING_SECONDS) return;
     new Audio(SOUND_SRC).play().catch(() => {});
   }, [state.isRunning, state.secondsLeft]);
+
+  useEffect(() => {
+    if (
+      state.isSetup &&
+      state.secondsLeft === 0 &&
+      prevSecondsLeft.current > 0 &&
+      session
+    ) {
+      fetchWithAuth("/daily-stats/focus-minutes", {
+        method: "POST",
+        body: JSON.stringify({ minutes: Math.round(state.totalSeconds / 60) }),
+      }).catch(() => {});
+    }
+    prevSecondsLeft.current = state.secondsLeft;
+  }, [state.secondsLeft, state.isSetup, state.totalSeconds, session, fetchWithAuth]);
 
   if (!state.isSetup) {
     return <SetupForm onSetup={(taskName, totalSeconds) => dispatch({ type: "SETUP", taskName, totalSeconds })} />;

@@ -1,6 +1,6 @@
 export function PageShell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="flex flex-1 items-center px-3 py-10 sm:px-8 sm:py-14">
+    <main className="flex flex-1 items-center px-3 pb-24 pt-10 sm:px-8 sm:py-14">
       <div className="relative mx-auto w-full max-w-6xl">
         <div
           aria-hidden
