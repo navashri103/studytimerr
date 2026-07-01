@@ -1,23 +1,35 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>StudyTimer</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  * { margin:0; padding:0; box-sizing:border-box; }
 
   html, body {
-    width: 100%; height: 100%;
-    background: #0d0d0d;
+    width:90px; height:90px;
+    /* same dark as circle — window corners are invisible */
+    background: #121212;
     overflow: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family: -apple-system, "Segoe UI", sans-serif;
     -webkit-font-smoothing: antialiased;
-    -webkit-app-region: drag;
     user-select: none;
+    -webkit-user-select: none;
   }
 
-  /* The circle fills the entire 90×90 window */
+  /* Full-window drag layer behind everything */
+  #drag {
+    position: absolute;
+    inset: 0;
+    -webkit-app-region: drag;
+    z-index: 1;
+  }
+
+  /* Circle on top — no-drag so clicks work */
   #circle {
-    width: 90px; height: 90px;
+    position: absolute;
+    inset: 3px;
     border-radius: 50%;
     background: #121212;
     border: 3px solid var(--c, #c2622b);
@@ -25,81 +37,90 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 2px;
+    z-index: 2;
+    -webkit-app-region: no-drag;
     cursor: pointer;
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
   }
 
+  #circle:hover { filter: brightness(1.1); }
+  #circle:active { filter: brightness(0.9); }
+
   .phase {
-    font-size: 8px; font-weight: 700;
-    letter-spacing: 1.5px;
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 2px;
     text-transform: uppercase;
     color: var(--c, #c2622b);
-    -webkit-app-region: no-drag;
   }
+
   .time {
-    font-size: 15px; font-weight: 700;
+    font-size: 16px;
+    font-weight: 700;
     color: #ffffff;
-    letter-spacing: -0.5px;
+    letter-spacing: -1px;
     font-variant-numeric: tabular-nums;
-    -webkit-app-region: no-drag;
   }
+
   .dot {
-    width: 5px; height: 5px; border-radius: 50%;
+    width: 5px; height: 5px;
+    border-radius: 50%;
     background: var(--c, #c2622b);
-    margin-top: 3px;
     opacity: 0;
     transition: opacity 0.3s;
-    -webkit-app-region: no-drag;
   }
-  .dot.running { opacity: 1; animation: pulse 1s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .dot.on {
+    opacity: 1;
+    animation: blink 1s ease-in-out infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+  }
 </style>
 </head>
 <body>
 
+<!-- drag region (behind circle) -->
+<div id="drag"></div>
+
+<!-- clickable circle (in front) -->
 <div id="circle" onclick="toggleTimer()">
-  <span class="phase" id="phase-label">FOCUS</span>
-  <span class="time"  id="time-display">25:00</span>
-  <div class="dot"    id="dot"></div>
+  <span class="phase" id="lbl">FOCUS</span>
+  <span class="time"  id="tmr">25:00</span>
+  <div  class="dot"   id="dot"></div>
 </div>
 
 <script>
-  const DURATIONS = { focus: 25*60, shortBreak: 5*60, longBreak: 15*60 };
-  const COLORS    = { focus:'#c2622b', shortBreak:'#0d9488', longBreak:'#7c3aed' };
-  const LABELS    = { focus:'FOCUS', shortBreak:'BREAK', longBreak:'LONG' };
-  const ORDER     = ['focus','shortBreak','focus','shortBreak',
-                     'focus','shortBreak','focus','longBreak'];
+  const DUR   = { focus:1500, shortBreak:300, longBreak:900 };
+  const COL   = { focus:'#c2622b', shortBreak:'#0d9488', longBreak:'#7c3aed' };
+  const LAB   = { focus:'FOCUS',   shortBreak:'BREAK',   longBreak:'LONG' };
+  const SEQ   = ['focus','shortBreak','focus','shortBreak',
+                 'focus','shortBreak','focus','longBreak'];
 
-  let idx = 0, phase = 'focus', secs = DURATIONS.focus;
-  let running = false, timer = null;
+  let idx=0, phase='focus', secs=DUR.focus, running=false, iv=null;
 
-  function fmt(s) {
-    return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
+  function fmt(s){
+    return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
   }
-
-  function render() {
-    document.documentElement.style.setProperty('--c', COLORS[phase]);
-    document.getElementById('phase-label').textContent   = LABELS[phase];
-    document.getElementById('time-display').textContent  = fmt(secs);
-    document.getElementById('dot').className = 'dot' + (running ? ' running' : '');
+  function render(){
+    document.documentElement.style.setProperty('--c', COL[phase]);
+    document.getElementById('lbl').textContent = LAB[phase];
+    document.getElementById('tmr').textContent = fmt(secs);
+    document.getElementById('dot').className   = 'dot'+(running?' on':'');
   }
-
-  function tick() {
-    if (secs > 0) { secs--; }
-    else {
-      idx = (idx + 1) % ORDER.length;
-      phase = ORDER[idx]; secs = DURATIONS[phase];
-    }
+  function tick(){
+    if(secs>0){ secs--; }
+    else{ idx=(idx+1)%SEQ.length; phase=SEQ[idx]; secs=DUR[phase]; }
     render();
   }
-
-  function toggleTimer() {
-    running = !running;
-    if (running) timer = setInterval(tick, 1000);
-    else { clearInterval(timer); timer = null; }
+  function toggleTimer(){
+    running=!running;
+    if(running) iv=setInterval(tick,1000);
+    else{ clearInterval(iv); iv=null; }
     render();
   }
-
   render();
 </script>
 </body>
