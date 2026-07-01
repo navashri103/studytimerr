@@ -1,9 +1,19 @@
+"use client";
+
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { ExplanationBlock } from "@/components/ExplanationBlock";
+import { OverlayTimer } from "@/components/OverlayTimer";
 import { PageShell } from "@/components/PageShell";
 import { PomodoroTimer } from "@/components/PomodoroTimer";
 import { SiteHeader } from "@/components/SiteHeader";
 
-export default function PomodoroPage() {
+function PomodoroContent() {
+  const params = useSearchParams();
+  const isOverlay = params.get("overlay") === "true";
+
+  if (isOverlay) return <OverlayTimer />;
+
   return (
     <PageShell>
       <SiteHeader backLink />
@@ -36,5 +46,13 @@ export default function PomodoroPage() {
         </div>
       </div>
     </PageShell>
+  );
+}
+
+export default function PomodoroPage() {
+  return (
+    <Suspense>
+      <PomodoroContent />
+    </Suspense>
   );
 }
