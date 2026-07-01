@@ -27,7 +27,7 @@ function createMainWindow() {
 function createOverlayWindow() {
   overlayWindow = new BrowserWindow({
     width: 300,
-    height: 140,
+    height: 160,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
