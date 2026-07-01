@@ -6,10 +6,8 @@ import { extractPlaylistId, extractSoundCloudUrl } from "@/lib/spotify";
 
 type Platform = "soundcloud" | "spotify";
 
-// Default SoundCloud playlist — lofi/study audio, free, no video
-const DEFAULT_SC_URL =
-  "https://soundcloud.com/chillhopmusic/sets/chillhop-essentials-2023";
 const DEFAULT_SPOTIFY_ID = "0oPyDVNdgcPFAWmOYSK7O1";
+const DEFAULT_SC_URL = "https://soundcloud.com/dabootlegboy/sets/study-chill-lofi-hiphop";
 
 const STORAGE_KEYS: Record<Platform, string> = {
   soundcloud: "studytimer:sc-url",
@@ -19,10 +17,10 @@ const PLATFORM_STORAGE = "studytimer:music-platform";
 
 function readStored(platform: Platform): string {
   if (typeof window === "undefined")
-    return platform === "soundcloud" ? DEFAULT_SC_URL : DEFAULT_SPOTIFY_ID;
+    return platform === "spotify" ? DEFAULT_SPOTIFY_ID : DEFAULT_SC_URL;
   return (
     window.localStorage.getItem(STORAGE_KEYS[platform]) ??
-    (platform === "soundcloud" ? DEFAULT_SC_URL : DEFAULT_SPOTIFY_ID)
+    (platform === "spotify" ? DEFAULT_SPOTIFY_ID : DEFAULT_SC_URL)
   );
 }
 
@@ -44,7 +42,7 @@ function buildEmbedUrl(platform: Platform, value: string): string {
 export function SpotifyPlayer() {
   const [open, setOpen] = useState(false);
   const [platform, setPlatform] = useState<Platform>(readPlatform);
-  const [value, setValue] = useState(() => readStored(readPlatform()));
+  const [value, setValue] = useState<string>(() => readStored(readPlatform()));
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
