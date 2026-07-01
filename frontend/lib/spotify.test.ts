@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractPlaylistId, extractYouTubePlaylistId } from "./spotify";
+import { extractPlaylistId, extractSoundCloudUrl } from "./spotify";
 
 describe("extractPlaylistId", () => {
   it("extracts the id from a full share link with query params", () => {
@@ -41,32 +41,30 @@ describe("extractPlaylistId", () => {
   });
 });
 
-describe("extractYouTubePlaylistId", () => {
-  it("extracts list param from a playlist URL", () => {
+describe("extractSoundCloudUrl", () => {
+  it("accepts a full soundcloud.com playlist URL", () => {
     expect(
-      extractYouTubePlaylistId(
-        "https://www.youtube.com/playlist?list=PLzH6n4zXuckquVnQ0KlMDxyT5YE-sA8Ps",
-      ),
-    ).toBe("PLzH6n4zXuckquVnQ0KlMDxyT5YE-sA8Ps");
+      extractSoundCloudUrl("https://soundcloud.com/chillhopmusic/sets/chillhop-essentials"),
+    ).toBe("https://soundcloud.com/chillhopmusic/sets/chillhop-essentials");
   });
 
-  it("extracts list param from a watch URL that includes a playlist", () => {
+  it("normalises a URL without the https:// prefix", () => {
     expect(
-      extractYouTubePlaylistId(
-        "https://www.youtube.com/watch?v=jfKfPfyJRdk&list=PLzH6n4zXuckquVnQ0KlMDxyT5YE-sA8Ps",
+      extractSoundCloudUrl("soundcloud.com/chillhopmusic/sets/chillhop-essentials"),
+    ).toBe("https://soundcloud.com/chillhopmusic/sets/chillhop-essentials");
+  });
+
+  it("strips query params and keeps only the path", () => {
+    expect(
+      extractSoundCloudUrl(
+        "https://soundcloud.com/chillhopmusic/sets/chillhop-essentials?si=abc123",
       ),
-    ).toBe("PLzH6n4zXuckquVnQ0KlMDxyT5YE-sA8Ps");
+    ).toBe("https://soundcloud.com/chillhopmusic/sets/chillhop-essentials");
   });
 
-  it("accepts a bare YouTube playlist ID", () => {
-    expect(extractYouTubePlaylistId("PLzH6n4zXuckquVnQ0KlMDxyT5YE-sA8Ps")).toBe(
-      "PLzH6n4zXuckquVnQ0KlMDxyT5YE-sA8Ps",
-    );
-  });
-
-  it("returns null for empty or unrecognized input", () => {
-    expect(extractYouTubePlaylistId("")).toBeNull();
-    expect(extractYouTubePlaylistId("not a link")).toBeNull();
-    expect(extractYouTubePlaylistId("https://open.spotify.com/playlist/abc")).toBeNull();
+  it("returns null for empty or non-SoundCloud input", () => {
+    expect(extractSoundCloudUrl("")).toBeNull();
+    expect(extractSoundCloudUrl("https://open.spotify.com/playlist/abc")).toBeNull();
+    expect(extractSoundCloudUrl("not a link")).toBeNull();
   });
 });

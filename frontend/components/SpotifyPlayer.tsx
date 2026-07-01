@@ -2,43 +2,49 @@
 
 import { useState } from "react";
 import { Check, Music, Pencil, X } from "lucide-react";
-import { extractPlaylistId, extractYouTubePlaylistId } from "@/lib/spotify";
+import { extractPlaylistId, extractSoundCloudUrl } from "@/lib/spotify";
 
-type Platform = "spotify" | "youtube";
+type Platform = "soundcloud" | "spotify";
 
-const DEFAULTS: Record<Platform, string> = {
-  spotify: "0oPyDVNdgcPFAWmOYSK7O1",
-  // Lofi Girl — beats to study/relax to (free, full tracks, no login needed)
-  youtube: "PLzH6n4zXucko5QiSb3vxhR9RzQFQmOBjL",
-};
+// Default SoundCloud playlist — lofi/study audio, free, no video
+const DEFAULT_SC_URL =
+  "https://soundcloud.com/chillhopmusic/sets/chillhop-essentials-2023";
+const DEFAULT_SPOTIFY_ID = "0oPyDVNdgcPFAWmOYSK7O1";
 
 const STORAGE_KEYS: Record<Platform, string> = {
+  soundcloud: "studytimer:sc-url",
   spotify: "studytimer:playlist",
-  youtube: "studytimer:yt-playlist",
 };
-
 const PLATFORM_STORAGE = "studytimer:music-platform";
 
 function readStored(platform: Platform): string {
-  if (typeof window === "undefined") return DEFAULTS[platform];
-  return window.localStorage.getItem(STORAGE_KEYS[platform]) ?? DEFAULTS[platform];
+  if (typeof window === "undefined")
+    return platform === "soundcloud" ? DEFAULT_SC_URL : DEFAULT_SPOTIFY_ID;
+  return (
+    window.localStorage.getItem(STORAGE_KEYS[platform]) ??
+    (platform === "soundcloud" ? DEFAULT_SC_URL : DEFAULT_SPOTIFY_ID)
+  );
 }
 
 function readPlatform(): Platform {
-  if (typeof window === "undefined") return "youtube";
-  return (window.localStorage.getItem(PLATFORM_STORAGE) as Platform) ?? "youtube";
+  if (typeof window === "undefined") return "soundcloud";
+  return (window.localStorage.getItem(PLATFORM_STORAGE) as Platform) ?? "soundcloud";
 }
 
-function embedUrl(platform: Platform, id: string): string {
+function buildEmbedUrl(platform: Platform, value: string): string {
   if (platform === "spotify")
-    return `https://open.spotify.com/embed/playlist/${id}?utm_source=generator`;
-  return `https://www.youtube.com/embed/videoseries?list=${id}&autoplay=0`;
+    return `https://open.spotify.com/embed/playlist/${value}?utm_source=generator`;
+
+  // SoundCloud compact audio embed — visual=false keeps it as a track list,
+  // not the big artwork view, which fits our small 152px player perfectly.
+  const encoded = encodeURIComponent(value);
+  return `https://w.soundcloud.com/player/?url=${encoded}&color=%23121212&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false`;
 }
 
 export function SpotifyPlayer() {
   const [open, setOpen] = useState(false);
   const [platform, setPlatform] = useState<Platform>(readPlatform);
-  const [playlistId, setPlaylistId] = useState(() => readStored(readPlatform()));
+  const [value, setValue] = useState(() => readStored(readPlatform()));
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -46,33 +52,27 @@ export function SpotifyPlayer() {
   function switchPlatform(next: Platform) {
     window.localStorage.setItem(PLATFORM_STORAGE, next);
     setPlatform(next);
-    setPlaylistId(readStored(next));
+    setValue(readStored(next));
     setEditing(false);
     setError(null);
   }
 
   function saveDraft() {
-    const id =
-      platform === "spotify"
-        ? extractPlaylistId(draft)
-        : extractYouTubePlaylistId(draft);
-    if (!id) {
-      setError("That doesn't look like a valid playlist link.");
-      return;
+    if (platform === "spotify") {
+      const id = extractPlaylistId(draft);
+      if (!id) { setError("That doesn't look like a Spotify playlist link."); return; }
+      setValue(id);
+      window.localStorage.setItem(STORAGE_KEYS.spotify, id);
+    } else {
+      const url = extractSoundCloudUrl(draft);
+      if (!url) { setError("Paste the full soundcloud.com playlist link."); return; }
+      setValue(url);
+      window.localStorage.setItem(STORAGE_KEYS.soundcloud, url);
     }
-    setPlaylistId(id);
-    window.localStorage.setItem(STORAGE_KEYS[platform], id);
     setEditing(false);
     setError(null);
     setDraft("");
   }
-
-  const PLATFORM_HINT: Record<Platform, string> = {
-    spotify:
-      'Open Spotify → your playlist → ••• → Share → "Copy link to playlist"',
-    youtube:
-      'Open YouTube → your playlist → Share → "Copy link" (or paste the full URL)',
-  };
 
   if (!open) {
     return (
@@ -93,9 +93,8 @@ export function SpotifyPlayer() {
       <div className="flex items-center justify-between px-3 py-2">
         <div className="flex items-center gap-1.5">
           <Music className="size-3.5 text-white/60" />
-          {/* Platform toggle */}
           <div className="flex rounded-full bg-white/10 p-0.5">
-            {(["youtube", "spotify"] as Platform[]).map((p) => (
+            {(["soundcloud", "spotify"] as Platform[]).map((p) => (
               <button
                 key={p}
                 type="button"
@@ -106,7 +105,7 @@ export function SpotifyPlayer() {
                     : "text-white/55 hover:text-white"
                 }`}
               >
-                {p === "youtube" ? "YouTube" : "Spotify"}
+                {p === "soundcloud" ? "SoundCloud" : "Spotify"}
               </button>
             ))}
           </div>
@@ -131,18 +130,30 @@ export function SpotifyPlayer() {
         </div>
       </div>
 
+      {/* Platform label */}
+      {platform === "soundcloud" && !editing && (
+        <p className="px-3 pb-1 text-[10px] text-white/40">
+          Audio only — no video, no ads, free
+        </p>
+      )}
+
       {/* Custom playlist input */}
       {editing && (
         <div className="border-t border-white/10 bg-black/30 px-3 py-3">
-          <p className="text-[11px] leading-relaxed text-white/60">
-            Paste your {platform === "youtube" ? "YouTube" : "Spotify"} playlist
-            link:{" "}
-            <strong className="text-white/80">{PLATFORM_HINT[platform]}</strong>.
-            Must be set to public.
-          </p>
-          {platform === "youtube" && (
-            <p className="mt-1 text-[10px] text-white/45">
-              No ads, full tracks — no account needed.
+          {platform === "soundcloud" ? (
+            <p className="text-[11px] leading-relaxed text-white/60">
+              Paste any public SoundCloud playlist link —{" "}
+              <strong className="text-white/80">
+                soundcloud.com → your playlist → Share → Copy link
+              </strong>
+            </p>
+          ) : (
+            <p className="text-[11px] leading-relaxed text-white/60">
+              Open Spotify → your playlist →{" "}
+              <strong className="text-white/80">
+                ••• → Share → Copy link to playlist
+              </strong>
+              . Must be public.
             </p>
           )}
           <form
@@ -152,7 +163,11 @@ export function SpotifyPlayer() {
             <input
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              placeholder="Paste playlist link"
+              placeholder={
+                platform === "soundcloud"
+                  ? "soundcloud.com/user/sets/playlist"
+                  : "open.spotify.com/playlist/..."
+              }
               className="flex-1 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white outline-none placeholder:text-white/30 focus:border-white/30"
             />
             <button
@@ -169,9 +184,9 @@ export function SpotifyPlayer() {
 
       {/* Embed */}
       <iframe
-        key={`${platform}-${playlistId}`}
-        title={`${platform} playlist`}
-        src={embedUrl(platform, playlistId)}
+        key={`${platform}-${value}`}
+        title={`${platform === "soundcloud" ? "SoundCloud" : "Spotify"} playlist`}
+        src={buildEmbedUrl(platform, value)}
         width="100%"
         height="152"
         style={{ border: 0 }}
