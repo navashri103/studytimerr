@@ -2,35 +2,77 @@
 
 import { useState } from "react";
 import { Check, Music, Pencil, X } from "lucide-react";
-import { extractPlaylistId } from "@/lib/spotify";
+import { extractPlaylistId, extractYouTubePlaylistId } from "@/lib/spotify";
 
-const DEFAULT_PLAYLIST_ID = "0oPyDVNdgcPFAWmOYSK7O1";
-const STORAGE_KEY = "studytimer:playlist";
+type Platform = "spotify" | "youtube";
 
-function readStoredPlaylistId(): string {
-  if (typeof window === "undefined") return DEFAULT_PLAYLIST_ID;
-  return window.localStorage.getItem(STORAGE_KEY) ?? DEFAULT_PLAYLIST_ID;
+const DEFAULTS: Record<Platform, string> = {
+  spotify: "0oPyDVNdgcPFAWmOYSK7O1",
+  // Lofi Girl — beats to study/relax to (free, full tracks, no login needed)
+  youtube: "PLzH6n4zXucko5QiSb3vxhR9RzQFQmOBjL",
+};
+
+const STORAGE_KEYS: Record<Platform, string> = {
+  spotify: "studytimer:playlist",
+  youtube: "studytimer:yt-playlist",
+};
+
+const PLATFORM_STORAGE = "studytimer:music-platform";
+
+function readStored(platform: Platform): string {
+  if (typeof window === "undefined") return DEFAULTS[platform];
+  return window.localStorage.getItem(STORAGE_KEYS[platform]) ?? DEFAULTS[platform];
+}
+
+function readPlatform(): Platform {
+  if (typeof window === "undefined") return "youtube";
+  return (window.localStorage.getItem(PLATFORM_STORAGE) as Platform) ?? "youtube";
+}
+
+function embedUrl(platform: Platform, id: string): string {
+  if (platform === "spotify")
+    return `https://open.spotify.com/embed/playlist/${id}?utm_source=generator`;
+  return `https://www.youtube.com/embed/videoseries?list=${id}&autoplay=0`;
 }
 
 export function SpotifyPlayer() {
   const [open, setOpen] = useState(false);
-  const [playlistId, setPlaylistId] = useState(readStoredPlaylistId);
+  const [platform, setPlatform] = useState<Platform>(readPlatform);
+  const [playlistId, setPlaylistId] = useState(() => readStored(readPlatform()));
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  function switchPlatform(next: Platform) {
+    window.localStorage.setItem(PLATFORM_STORAGE, next);
+    setPlatform(next);
+    setPlaylistId(readStored(next));
+    setEditing(false);
+    setError(null);
+  }
+
   function saveDraft() {
-    const id = extractPlaylistId(draft);
+    const id =
+      platform === "spotify"
+        ? extractPlaylistId(draft)
+        : extractYouTubePlaylistId(draft);
     if (!id) {
-      setError("That doesn't look like a public playlist link.");
+      setError("That doesn't look like a valid playlist link.");
       return;
     }
     setPlaylistId(id);
-    window.localStorage.setItem(STORAGE_KEY, id);
+    window.localStorage.setItem(STORAGE_KEYS[platform], id);
     setEditing(false);
     setError(null);
     setDraft("");
   }
+
+  const PLATFORM_HINT: Record<Platform, string> = {
+    spotify:
+      'Open Spotify → your playlist → ••• → Share → "Copy link to playlist"',
+    youtube:
+      'Open YouTube → your playlist → Share → "Copy link" (or paste the full URL)',
+  };
 
   if (!open) {
     return (
@@ -46,19 +88,33 @@ export function SpotifyPlayer() {
   }
 
   return (
-    <div className="fixed bottom-5 left-5 z-40 w-80 max-w-[calc(100vw-2.5rem)] overflow-hidden rounded-2xl bg-[#121212] shadow-2xl">
+    <div className="fixed bottom-5 left-5 z-40 w-[320px] overflow-hidden rounded-2xl bg-[#121212] shadow-2xl">
+      {/* Header */}
       <div className="flex items-center justify-between px-3 py-2">
-        <span className="flex items-center gap-1.5 text-xs font-medium text-white/70">
-          <Music className="size-3.5" />
-          Study music
-        </span>
+        <div className="flex items-center gap-1.5">
+          <Music className="size-3.5 text-white/60" />
+          {/* Platform toggle */}
+          <div className="flex rounded-full bg-white/10 p-0.5">
+            {(["youtube", "spotify"] as Platform[]).map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => switchPlatform(p)}
+                className={`rounded-full px-2.5 py-1 text-[10px] font-medium transition-colors ${
+                  platform === p
+                    ? "bg-white text-black"
+                    : "text-white/55 hover:text-white"
+                }`}
+              >
+                {p === "youtube" ? "YouTube" : "Spotify"}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => {
-              setEditing((v) => !v);
-              setError(null);
-            }}
+            onClick={() => { setEditing((v) => !v); setError(null); }}
             aria-label="Use your own playlist"
             className="text-white/50 hover:text-white"
           >
@@ -75,18 +131,22 @@ export function SpotifyPlayer() {
         </div>
       </div>
 
+      {/* Custom playlist input */}
       {editing && (
         <div className="border-t border-white/10 bg-black/30 px-3 py-3">
           <p className="text-[11px] leading-relaxed text-white/60">
-            Use your own playlist: open Spotify, go to your playlist, tap{" "}
-            <strong className="text-white/80">••• &gt; Share &gt; Copy link to playlist</strong>
-            , then paste it below. It must be set to public.
+            Paste your {platform === "youtube" ? "YouTube" : "Spotify"} playlist
+            link:{" "}
+            <strong className="text-white/80">{PLATFORM_HINT[platform]}</strong>.
+            Must be set to public.
           </p>
+          {platform === "youtube" && (
+            <p className="mt-1 text-[10px] text-white/45">
+              No ads, full tracks — no account needed.
+            </p>
+          )}
           <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              saveDraft();
-            }}
+            onSubmit={(e) => { e.preventDefault(); saveDraft(); }}
             className="mt-2 flex items-center gap-2"
           >
             <input
@@ -107,9 +167,11 @@ export function SpotifyPlayer() {
         </div>
       )}
 
+      {/* Embed */}
       <iframe
-        title="Spotify playlist"
-        src={`https://open.spotify.com/embed/playlist/${playlistId}?utm_source=generator`}
+        key={`${platform}-${playlistId}`}
+        title={`${platform} playlist`}
+        src={embedUrl(platform, playlistId)}
         width="100%"
         height="152"
         style={{ border: 0 }}
