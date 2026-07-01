@@ -1,14 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useReducer } from "react";
-import { GripHorizontal, Pause, Play, SkipForward } from "lucide-react";
+import { useCallback, useEffect, useReducer, useState } from "react";
+import { Pause, Play, SkipForward, X } from "lucide-react";
 import type React from "react";
 
-// WebkitAppRegion is Electron-specific — not in standard CSSProperties.
 type ElectronStyle = React.CSSProperties & { WebkitAppRegion?: "drag" | "no-drag" };
+
 import {
   POMODORO_DURATIONS,
-  SESSIONS_BEFORE_LONG_BREAK,
   createInitialPomodoroState,
   formatTime,
   pomodoroReducer,
@@ -29,11 +28,12 @@ const PHASE_LABEL: Record<PomodoroPhase, string> = {
 
 declare global {
   interface Window {
-    electron?: { closeOverlay: () => void; isOverlay: () => boolean };
+    electron?: { closeOverlay: () => void };
   }
 }
 
 export function OverlayTimer() {
+  const [expanded, setExpanded] = useState(false);
   const [state, dispatch] = useReducer(
     pomodoroReducer,
     undefined,
@@ -51,87 +51,144 @@ export function OverlayTimer() {
   }, [state.isRunning]);
 
   const color = PHASE_COLOR[state.phase];
-  const fraction = state.secondsLeft / POMODORO_DURATIONS[state.phase];
 
-  function closeOverlay() {
-    window.electron?.closeOverlay();
+  if (!expanded) {
+    // ── Collapsed: small floating icon ───────────────────────────
+    return (
+      <div
+        className="flex h-screen w-screen items-center justify-center"
+        style={{ background: "transparent" } as ElectronStyle}
+      >
+        <button
+          type="button"
+          onClick={() => setExpanded(true)}
+          style={{
+            width: 64,
+            height: 64,
+            borderRadius: "50%",
+            background: "rgba(18,18,18,0.92)",
+            border: `3px solid ${color}`,
+            backdropFilter: "blur(12px)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            boxShadow: `0 4px 20px rgba(0,0,0,0.4)`,
+            WebkitAppRegion: "drag",
+          } as ElectronStyle}
+        >
+          <span
+            style={{
+              fontSize: 9,
+              fontWeight: 600,
+              letterSpacing: 1,
+              color,
+              textTransform: "uppercase",
+              WebkitAppRegion: "no-drag",
+            } as ElectronStyle}
+          >
+            {PHASE_LABEL[state.phase]}
+          </span>
+          <span
+            style={{
+              fontSize: 13,
+              fontWeight: 700,
+              color: "white",
+              fontVariantNumeric: "tabular-nums",
+              WebkitAppRegion: "no-drag",
+            } as ElectronStyle}
+          >
+            {formatTime(state.secondsLeft)}
+          </span>
+        </button>
+      </div>
+    );
   }
+
+  // ── Expanded: compact timer strip ─────────────────────────────
+  const fraction = state.secondsLeft / POMODORO_DURATIONS[state.phase];
 
   return (
     <div
-      className="flex h-screen w-screen select-none flex-col items-center justify-center gap-2 rounded-2xl"
-      style={{
-        background: "rgba(18, 18, 18, 0.92)",
-        backdropFilter: "blur(12px)",
-        WebkitAppRegion: "drag",
-      } as ElectronStyle}
+      className="flex h-screen w-screen flex-col"
+      style={{ background: "transparent" } as ElectronStyle}
     >
-      {/* Drag handle + close */}
       <div
-        className="flex w-full items-center justify-between px-3 pt-1"
-        style={{ WebkitAppRegion: "drag" } as ElectronStyle}
+        style={{
+          background: "rgba(18,18,18,0.93)",
+          backdropFilter: "blur(16px)",
+          borderRadius: 16,
+          border: "1px solid rgba(255,255,255,0.08)",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+          padding: "10px 14px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+          WebkitAppRegion: "drag",
+        } as ElectronStyle}
       >
-        <GripHorizontal className="size-3.5 text-white/30" />
-        <button
-          type="button"
-          onClick={closeOverlay}
-          className="text-white/30 hover:text-white/70"
-          style={{ WebkitAppRegion: "no-drag" } as ElectronStyle}
-        >
-          ✕
-        </button>
-      </div>
-
-      {/* Progress bar */}
-      <div className="mx-4 h-1 w-full rounded-full bg-white/10">
+        {/* Progress bar + phase label + close */}
         <div
-          className="h-full rounded-full transition-all"
-          style={{ width: `${fraction * 100}%`, backgroundColor: color }}
-        />
-      </div>
-
-      {/* Timer display */}
-      <div className="flex flex-col items-center gap-0.5">
-        <p className="text-[10px] font-medium uppercase tracking-widest" style={{ color }}>
-          {PHASE_LABEL[state.phase]}
-        </p>
-        <p className="font-[family-name:var(--font-serif)] text-4xl text-white">
-          {formatTime(state.secondsLeft)}
-        </p>
-      </div>
-
-      {/* Session dots */}
-      <div className="flex items-center gap-1.5">
-        {Array.from({ length: SESSIONS_BEFORE_LONG_BREAK }).map((_, i) => (
-          <span
-            key={i}
-            className="size-1.5 rounded-full"
-            style={{
-              backgroundColor: i < state.completedFocusSessions ? color : "rgba(255,255,255,0.2)",
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Controls */}
-      <div
-        className="flex items-center gap-2"
-        style={{ WebkitAppRegion: "no-drag" } as ElectronStyle}
-      >
-        <button
-          type="button"
-          onClick={toggle}
-          className="flex size-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            WebkitAppRegion: "no-drag",
+          } as ElectronStyle}
         >
-          {state.isRunning ? <Pause className="size-3.5" /> : <Play className="size-3.5" />}
-        </button>
-        <button
-          type="button"
-          onClick={() => dispatch({ type: "SKIP" })}
-          className="flex size-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+          <span style={{ fontSize: 10, color, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase" }}>
+            {PHASE_LABEL[state.phase]}
+          </span>
+          <div style={{ flex: 1, height: 3, borderRadius: 2, background: "rgba(255,255,255,0.1)" }}>
+            <div style={{ width: `${fraction * 100}%`, height: "100%", borderRadius: 2, background: color, transition: "width 0.4s linear" }} />
+          </div>
+          <button
+            type="button"
+            onClick={() => setExpanded(false)}
+            style={{ color: "rgba(255,255,255,0.4)", background: "none", border: "none", cursor: "pointer", padding: 0, lineHeight: 1 }}
+          >
+            <X size={13} />
+          </button>
+        </div>
+
+        {/* Time + controls */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            WebkitAppRegion: "no-drag",
+          } as ElectronStyle}
         >
-          <SkipForward className="size-3.5" />
-        </button>
+          <span style={{ fontSize: 28, fontWeight: 700, color: "white", fontVariantNumeric: "tabular-nums", letterSpacing: -1 }}>
+            {formatTime(state.secondsLeft)}
+          </span>
+          <div style={{ display: "flex", gap: 6 }}>
+            <button
+              type="button"
+              onClick={toggle}
+              style={{
+                width: 32, height: 32, borderRadius: "50%",
+                background: "white", border: "none", cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}
+            >
+              {state.isRunning ? <Pause size={14} color="#111" /> : <Play size={14} color="#111" />}
+            </button>
+            <button
+              type="button"
+              onClick={() => dispatch({ type: "SKIP" })}
+              style={{
+                width: 32, height: 32, borderRadius: "50%",
+                background: "rgba(255,255,255,0.1)", border: "none", cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}
+            >
+              <SkipForward size={14} color="white" />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
