@@ -30,9 +30,11 @@ function createOverlayWindow() {
     height: 130,
     frame: false,
     transparent: true,
+    backgroundColor: '#00000000',
     alwaysOnTop: true,
     resizable: false,
     skipTaskbar: true,
+    hasShadow: false,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
