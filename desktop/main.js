@@ -38,7 +38,9 @@ function createOverlayWindow() {
       contextIsolation: true,
     },
   });
-  overlayWindow.loadURL(`${APP_URL}/pomodoro?overlay=true`);
+  // Load a standalone local HTML file — no Next.js, no body background,
+  // fully transparent. Much more reliable than loading the full Vercel site.
+  overlayWindow.loadFile(path.join(__dirname, "overlay.html"));
   overlayWindow.on("closed", () => { overlayWindow = null; });
 }
 

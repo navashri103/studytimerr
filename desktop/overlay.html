@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: transparent;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Collapsed icon ────────────────────────────────────────── */
+  #icon {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 68px; height: 68px;
+    border-radius: 50%;
+    background: rgba(18, 18, 18, 0.92);
+    backdrop-filter: blur(12px);
+    border: 3px solid var(--phase-color, #c2622b);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    -webkit-app-region: drag;
+    transition: border-color 0.3s;
+    user-select: none;
+  }
+  #icon .phase {
+    font-size: 8px; font-weight: 700;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--phase-color, #c2622b);
+    -webkit-app-region: no-drag;
+  }
+  #icon .time {
+    font-size: 14px; font-weight: 700;
+    color: white; letter-spacing: -0.5px;
+    -webkit-app-region: no-drag;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Expanded strip ────────────────────────────────────────── */
+  #strip {
+    position: fixed; inset: 0;
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    background: rgba(18, 18, 18, 0.93);
+    backdrop-filter: blur(16px);
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    padding: 10px 14px;
+    -webkit-app-region: drag;
+  }
+
+  #strip .top-row {
+    display: flex; align-items: center; gap: 8px;
+    -webkit-app-region: no-drag;
+  }
+  #strip .phase-label {
+    font-size: 9px; font-weight: 700;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--phase-color, #c2622b);
+    flex-shrink: 0;
+  }
+  #strip .progress-track {
+    flex: 1; height: 3px; border-radius: 2px;
+    background: rgba(255,255,255,0.1);
+  }
+  #strip .progress-fill {
+    height: 100%; border-radius: 2px;
+    background: var(--phase-color, #c2622b);
+    transition: width 0.4s linear;
+  }
+  #strip .close-btn {
+    background: none; border: none; cursor: pointer;
+    color: rgba(255,255,255,0.4); font-size: 14px;
+    display: flex; align-items: center;
+    -webkit-app-region: no-drag;
+  }
+  #strip .close-btn:hover { color: white; }
+
+  #strip .bottom-row {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    -webkit-app-region: no-drag;
+  }
+  #strip .big-time {
+    font-size: 30px; font-weight: 700;
+    color: white; letter-spacing: -1px;
+    font-variant-numeric: tabular-nums;
+  }
+  #strip .controls { display: flex; gap: 6px; }
+  #strip button.ctrl {
+    width: 32px; height: 32px; border-radius: 50%;
+    border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    -webkit-app-region: no-drag;
+  }
+  #strip button.play  { background: white; color: #111; }
+  #strip button.skip  { background: rgba(255,255,255,0.12); color: white; }
+  #strip button.play:hover { background: #ddd; }
+  #strip button.skip:hover { background: rgba(255,255,255,0.22); }
+</style>
+</head>
+<body>
+
+<!-- Collapsed icon -->
+<div id="icon" onclick="expand()">
+  <span class="phase" id="icon-phase">FOCUS</span>
+  <span class="time"  id="icon-time">25:00</span>
+</div>
+
+<!-- Expanded strip -->
+<div id="strip">
+  <div class="top-row">
+    <span class="phase-label" id="strip-phase">FOCUS</span>
+    <div class="progress-track">
+      <div class="progress-fill" id="progress" style="width:100%"></div>
+    </div>
+    <button class="close-btn" onclick="collapse()">✕</button>
+  </div>
+  <div class="bottom-row">
+    <span class="big-time" id="strip-time">25:00</span>
+    <div class="controls">
+      <button class="ctrl play" id="play-btn" onclick="toggleTimer()">▶</button>
+      <button class="ctrl skip" onclick="skipPhase()">⏭</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Timer state ────────────────────────────────────────────────
+  const DURATIONS = { focus: 25*60, shortBreak: 5*60, longBreak: 15*60 };
+  const COLORS    = { focus: '#c2622b', shortBreak: '#0d9488', longBreak: '#7c3aed' };
+  const LABELS    = { focus: 'FOCUS', shortBreak: 'BREAK', longBreak: 'LONG BREAK' };
+
+  const PHASE_ORDER = ['focus','shortBreak','focus','shortBreak','focus','shortBreak','focus','longBreak'];
+
+  let phaseIdx  = 0;
+  let phase     = 'focus';
+  let secs      = DURATIONS.focus;
+  let running   = false;
+  let interval  = null;
+
+  function fmt(s) {
+    return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
+  }
+
+  function setPhaseColor(p) {
+    document.documentElement.style.setProperty('--phase-color', COLORS[p]);
+  }
+
+  function render() {
+    const t = fmt(secs);
+    const frac = secs / DURATIONS[phase];
+    document.getElementById('icon-phase').textContent = LABELS[phase];
+    document.getElementById('icon-time').textContent  = t;
+    document.getElementById('strip-phase').textContent = LABELS[phase];
+    document.getElementById('strip-time').textContent  = t;
+    document.getElementById('progress').style.width   = (frac * 100) + '%';
+    document.getElementById('play-btn').textContent   = running ? '⏸' : '▶';
+    setPhaseColor(phase);
+  }
+
+  function tick() {
+    if (!running) return;
+    if (secs > 0) {
+      secs--;
+    } else {
+      phaseIdx = (phaseIdx + 1) % PHASE_ORDER.length;
+      phase = PHASE_ORDER[phaseIdx];
+      secs  = DURATIONS[phase];
+    }
+    render();
+  }
+
+  function toggleTimer() {
+    running = !running;
+    if (running) interval = setInterval(tick, 1000);
+    else { clearInterval(interval); interval = null; }
+    render();
+  }
+
+  function skipPhase() {
+    running = false;
+    clearInterval(interval); interval = null;
+    phaseIdx = (phaseIdx + 1) % PHASE_ORDER.length;
+    phase = PHASE_ORDER[phaseIdx];
+    secs  = DURATIONS[phase];
+    render();
+  }
+
+  // ── Show / hide ────────────────────────────────────────────────
+  function expand() {
+    document.getElementById('icon').style.display  = 'none';
+    document.getElementById('strip').style.display = 'flex';
+  }
+  function collapse() {
+    document.getElementById('strip').style.display = 'none';
+    document.getElementById('icon').style.display  = 'flex';
+  }
+
+  render();
+</script>
+</body>
+</html>
