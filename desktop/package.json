@@ -16,8 +16,8 @@
       "output": "dist"
     },
     "win": {
-      "target": "nsis",
-      "icon": "assets/icon.ico"
+      "target": "portable",
+      "icon": "assets/icon.png"
     },
     "mac": {
       "target": "dmg",
