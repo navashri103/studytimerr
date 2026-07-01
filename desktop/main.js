@@ -79,9 +79,39 @@ function createTray() {
   tray.on("click", toggleOverlay);
 }
 
+function createAppMenu() {
+  const menu = Menu.buildFromTemplate([
+    {
+      label: "File",
+      submenu: [{ label: "Quit", accelerator: "CmdOrCtrl+Q", click: () => app.quit() }],
+    },
+    {
+      label: "Timer",
+      submenu: [
+        {
+          label: "Toggle Floating Overlay",
+          accelerator: "CmdOrCtrl+Shift+T",
+          click: toggleOverlay,
+        },
+      ],
+    },
+    {
+      label: "Window",
+      submenu: [
+        { label: "Minimize", accelerator: "CmdOrCtrl+M", role: "minimize" },
+        { label: "Reload", accelerator: "CmdOrCtrl+R", role: "reload" },
+        { type: "separator" },
+        { label: "Toggle DevTools", accelerator: "F12", role: "toggleDevTools" },
+      ],
+    },
+  ]);
+  Menu.setApplicationMenu(menu);
+}
+
 app.whenReady().then(() => {
   createMainWindow();
   createTray();
+  createAppMenu();
 });
 
 // Keep the app alive in the tray when all windows are closed.
