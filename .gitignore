@@ -1,6 +1,7 @@
 # Dev tool configs
 .hintrc
 .claude/
+claude-skills/
 
 # AI/planning files
 CLAUDE.MD

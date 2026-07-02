@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import CORS_ORIGINS
-from app.routers import auth, daily_stats, eisenhower, pareto
+from app.routers import auth, daily_stats, eisenhower, pareto, spotify
 
 logger = logging.getLogger("studytimer")
 
@@ -24,6 +24,7 @@ app.include_router(auth.router)
 app.include_router(daily_stats.router)
 app.include_router(eisenhower.router)
 app.include_router(pareto.router)
+app.include_router(spotify.router)
 
 
 @app.exception_handler(httpx.HTTPStatusError)
